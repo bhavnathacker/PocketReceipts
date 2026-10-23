@@ -19,9 +19,16 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io") {
+            content {
+                includeGroup("com.github.leonard-palm")
+            }
+        }
     }
 }
 
 rootProject.name = "Pocket Receipts"
 include(":app")
+include(":core:test")
+project(":core:test").buildFileName = "test.gradle.kts"
  
