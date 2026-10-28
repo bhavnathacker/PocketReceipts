@@ -1,22 +1,16 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
+    id("pocketreceipts.android.application")
+    id("pocketreceipts.android.compose")
+    id("pocketreceipts.hilt")
 }
 
 android {
     namespace = "com.bhavnathacker.pocketreceipts"
-    compileSdk {
-        version = release(37)
-    }
 
     defaultConfig {
         applicationId = "com.bhavnathacker.pocketreceipts"
-        minSdk = 24
-        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -26,39 +20,35 @@ android {
             }
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
     buildFeatures {
-        compose = true
         buildConfig = true
-    }
-    testOptions {
-        unitTests.all {
-            it.useJUnitPlatform()
-        }
     }
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
+    implementation(project(":domain"))
+    implementation(project(":core:ui"))
+    implementation(project(":feature:receipts"))
+    implementation(project(":feature:capture"))
+    implementation(project(":feature:ask"))
+    implementation(project(":feature:modelsetup"))
+    implementation(project(":feature:settings"))
+    implementation(project(":data:receipts"))
+    implementation(project(":data:ai"))
+    implementation(project(":data:model-download"))
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.timber)
     implementation(libs.compose.state.events)
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(project(":core:ui-test"))
+    androidTestImplementation(libs.truth)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    debugImplementation(libs.androidx.compose.ui.tooling)
 }

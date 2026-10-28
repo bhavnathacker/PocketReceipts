@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Pocket Receipts</string>
+    <string name="nav_receipts">Receipts</string>
+    <string name="nav_ask">Ask</string>
+    <string name="nav_settings">Settings</string>
 </resources>
