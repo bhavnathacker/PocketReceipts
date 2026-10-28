@@ -263,7 +263,8 @@
 ## Development Workflow
 
 ### Git Workflow
-- **Main Only**: Commit and push directly to `main`. Do not create feature branches.
+- **Feature branches**: Do each change on a branch off `main` (e.g. `feature/<openspec-change-name>`). Commit there and push the branch for review.
+- **Review before merge**: Open a pull request into `main`. Merge only after the owner has reviewed it and explicitly approved the merge. Never commit or push directly to `main`.
 
 ### Local Development
 - **Gradle Wrapper**: Use Gradle wrapper for consistent builds
