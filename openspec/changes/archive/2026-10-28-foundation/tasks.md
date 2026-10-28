@@ -61,5 +61,5 @@
 
 ## Workflow follow-up
 
-- Commit and push directly to `main` (project rule: no feature branches).
+- Commit on `feature/foundation`, push it and open a pull request into `main`; merge only after the owner reviews and approves it (see the Git Workflow in `.claude/CLAUDE.md`).
 - Archive the change with `/opsx:archive` after review; this creates `openspec/specs/app-navigation` and `openspec/specs/privacy-guarantees`.
