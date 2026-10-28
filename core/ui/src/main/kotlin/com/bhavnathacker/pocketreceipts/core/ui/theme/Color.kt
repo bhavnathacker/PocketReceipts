@@ -1,4 +1,4 @@
-package com.bhavnathacker.pocketreceipts.ui.theme
+package com.bhavnathacker.pocketreceipts.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

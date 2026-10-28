@@ -1,4 +1,4 @@
-package com.bhavnathacker.pocketreceipts.ui.theme
+package com.bhavnathacker.pocketreceipts.core.ui.theme
 
 import android.app.Activity
 import android.os.Build

@@ -18,8 +18,10 @@
 ## Build Setup
 
 - **AGP 9** (`9.3.3`) with its built-in Kotlin support: there is no `org.jetbrains.kotlin.android` plugin, only `org.jetbrains.kotlin.plugin.compose`. Don't add the Kotlin Android plugin; use AGP 9 DSL and APIs.
+- Module build setup lives in convention plugins in the `build-logic` included build (`pocketreceipts.android.application`, `.android.library`, `.android.compose`, `.android.feature`, `.jvm.library`, `.hilt`, `.privacy`). New modules apply a convention plugin instead of configuring AGP/Kotlin directly, and are added in `settings.gradle.kts` with `includeModule(":group:name")`, which sets the `<name>.gradle.kts` build file name.
+- Privacy is enforced by the build (`./gradlew check`): only `:data:model-download` may depend on an HTTP client or add the INTERNET permission, and no analytics/crash-reporting SDKs are allowed. See README "Privacy guarantees".
 - All dependency and plugin versions live in the version catalog `gradle/libs.versions.toml`; reference them via `libs.*` aliases. Compose library versions come from the Compose BOM.
-- compileSdk/targetSdk 37, minSdk 24, Java 11 source/target. The Gradle daemon runs on JDK 25 (toolchain auto-provisioned via foojay, see `gradle/gradle-daemon-jvm.properties`).
+- compileSdk/targetSdk 37, minSdk 26, Java 11 source/target. The Gradle daemon runs on JDK 25 (toolchain auto-provisioned via foojay, see `gradle/gradle-daemon-jvm.properties`).
 - Gradle configuration cache is enabled (`gradle.properties`), so build logic must be configuration-cache compatible.
 - JVM unit tests (`app/src/test`) run on JUnit 5 via `useJUnitPlatform()` (Jupiter from `junit-bom`). Instrumented tests (`app/src/androidTest`) stay on JUnit 4, which `AndroidJUnitRunner` requires.
 - R8 keep rules go in `app/src/main/keepRules/` (AGP 9 picks up every file there), not `proguard-rules.pro`. Release optimization is currently disabled in `app/build.gradle.kts`.
@@ -28,7 +30,7 @@
 
 ### Clean Architecture Principles
 - **Three-Layer Architecture**: Strict separation between presentation, domain, and data layers
-- **Dependency Flow**: Dependencies flow inward (data → domain → presentation)
+- **Dependency Flow**: Feature (presentation) and data modules both depend on the domain module; domain depends on neither. Features never depend on data modules or on other features. `:app` is the composition root and wires data implementations via Hilt. `verifyModuleDependencies` (part of `./gradlew check`) enforces this.
 - **Module Organization**: Features organized into separate modules (app, data, domain, core, feature, etc.)
 
 ### Module Structure
@@ -43,11 +45,14 @@
 ### File Structure
 - **Module Structure**: Each module follows consistent internal structure
   ```
-  feature/scan/
-  ├── src/main/kotlin/com/bhavnathacker/pocketreceipts/feature/scan/
-  │   ├── data/           # Repository implementations, mappers
-  │   └── presentation/    # ViewModels, UI components
-  └── scan.gradle.kts
+  feature/capture/
+  ├── src/main/kotlin/com/bhavnathacker/pocketreceipts/feature/capture/
+  │   └── presentation/   # ViewModels, UI state, screens, UI mappers
+  └── capture.gradle.kts
+  data/receipts/
+  ├── src/main/kotlin/com/bhavnathacker/pocketreceipts/data/receipts/
+  │   └── ...             # Repository implementations, data sources, Room, mappers
+  └── receipts.gradle.kts
   ```
 
 ### Naming Conventions
@@ -258,7 +263,8 @@
 ## Development Workflow
 
 ### Git Workflow
-- **Main Only**: Commit and push directly to `main`. Do not create feature branches.
+- **Feature branches**: Do each change on a branch off `main` (e.g. `feature/<openspec-change-name>`). Commit there and push the branch for review.
+- **Review before merge**: Open a pull request into `main`. Merge only after the owner has reviewed it and explicitly approved the merge. Never commit or push directly to `main`.
 
 ### Local Development
 - **Gradle Wrapper**: Use Gradle wrapper for consistent builds
