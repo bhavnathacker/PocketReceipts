@@ -25,7 +25,10 @@ kover {
                 // Generated code: Hilt, Dagger factories, Compose previews.
                 packages("hilt_aggregated_deps", "dagger.hilt.internal.aggregatedroot.codegen")
                 classes("*_Hilt*", "Hilt_*", "*_Factory", "*_MembersInjector", "*_GeneratedInjector")
-                annotatedBy("androidx.compose.ui.tooling.preview.Preview")
+                annotatedBy(
+                    "androidx.compose.ui.tooling.preview.Preview",
+                    "androidx.compose.ui.tooling.preview.PreviewLightDark",
+                )
             }
         }
     }

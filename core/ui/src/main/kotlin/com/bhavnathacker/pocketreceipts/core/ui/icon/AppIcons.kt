@@ -9,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bhavnathacker.pocketreceipts.core.ui.R
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
@@ -27,7 +27,7 @@ object AppIcons {
     @DrawableRes val SettingsFilled = R.drawable.ic_settings_filled
 }
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun AppIconsPreview() {
     PocketReceiptsTheme {
