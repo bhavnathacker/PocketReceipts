@@ -49,7 +49,7 @@
 
 - [x] 8.1 Apply Kover in the root project with every module as a `kover` dependency, giving one aggregated report. Verify `./gradlew koverXmlReport` produces a report that includes `:app` and `:core:test` classes (if Kover doesn't support AGP 9 yet, record that and skip, per the design risk).
 - [x] 8.2 Add `.github/workflows/ci.yml` (push to `main` + pull requests: JDK 25, `gradle/actions/setup-gradle`, `./gradlew check koverXmlReport`, upload lint and Kover reports). Verify the workflow runs green on GitHub after pushing.
-- [ ] 8.3 Add the CI status badge and the module overview (module graph + dependency rules) to `README.md`. Verify the badge renders and shows the latest CI result.
+- [x] 8.3 Add the CI status badge and the module overview (module graph + dependency rules) to `README.md`. Verify the badge renders and shows the latest CI result.
 
 ## 9. Project documentation
 
