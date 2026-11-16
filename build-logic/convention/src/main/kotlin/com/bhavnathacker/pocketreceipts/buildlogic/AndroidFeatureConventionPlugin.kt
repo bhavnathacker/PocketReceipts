@@ -25,6 +25,8 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
                 add("implementation", libs.library("androidx-lifecycle-viewmodel-navigation3"))
                 add("implementation", libs.library("androidx-navigation3-runtime"))
                 add("implementation", libs.library("kotlinx-serialization-core"))
+                add("implementation", libs.library("compose-state-events"))
+                add("implementation", libs.library("timber"))
                 add("androidTestImplementation", project(":core:ui-test"))
             }
         }

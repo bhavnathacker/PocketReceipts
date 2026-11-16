@@ -18,12 +18,13 @@
 ## Build Setup
 
 - **AGP 9** (`9.3.3`) with its built-in Kotlin support: there is no `org.jetbrains.kotlin.android` plugin, only `org.jetbrains.kotlin.plugin.compose`. Don't add the Kotlin Android plugin; use AGP 9 DSL and APIs.
-- Module build setup lives in convention plugins in the `build-logic` included build (`pocketreceipts.android.application`, `.android.library`, `.android.compose`, `.android.feature`, `.jvm.library`, `.hilt`, `.privacy`). New modules apply a convention plugin instead of configuring AGP/Kotlin directly, and are added in `settings.gradle.kts` with `includeModule(":group:name")`, which sets the `<name>.gradle.kts` build file name.
+- Module build setup lives in convention plugins in the `build-logic` included build (`pocketreceipts.android.application`, `.android.library`, `.android.compose`, `.android.feature`, `.android.room`, `.jvm.library`, `.hilt`, `.privacy`). New modules apply a convention plugin instead of configuring AGP/Kotlin directly, and are added in `settings.gradle.kts` with `includeModule(":group:name")`, which sets the `<name>.gradle.kts` build file name.
 - Privacy is enforced by the build (`./gradlew check`): only `:data:model-download` may depend on an HTTP client or add the INTERNET permission, and no analytics/crash-reporting SDKs are allowed. See README "Privacy guarantees".
 - All dependency and plugin versions live in the version catalog `gradle/libs.versions.toml`; reference them via `libs.*` aliases. Compose library versions come from the Compose BOM.
 - compileSdk/targetSdk 37, minSdk 26, Java 11 source/target. The Gradle daemon runs on JDK 25 (toolchain auto-provisioned via foojay, see `gradle/gradle-daemon-jvm.properties`).
 - Gradle configuration cache is enabled (`gradle.properties`), so build logic must be configuration-cache compatible.
 - JVM unit tests (`app/src/test`) run on JUnit 5 via `useJUnitPlatform()` (Jupiter from `junit-bom`). Instrumented tests (`app/src/androidTest`) stay on JUnit 4, which `AndroidJUnitRunner` requires.
+- `:app` instrumented tests run with `HiltTestRunner` and are `@HiltAndroidTest` classes hosted in the debug-only `HiltTestActivity`. Feature modules test screens statelessly with `createComposeRule()` (the activity comes from `:core:ui-test`).
 - R8 keep rules go in `app/src/main/keepRules/` (AGP 9 picks up every file there), not `proguard-rules.pro`. Release optimization is currently disabled in `app/build.gradle.kts`.
 
 ## Project Structure & Architecture
@@ -206,8 +207,9 @@
 - **Null Safety**: Handle null values appropriately in mappers
 
 ### Database
-- **Room**: Use Room for local database operations
-- **SQLCipher**: Use SQLCipher for database encryption
+- **Room**: Use Room for local database operations. Apply the `pocketreceipts.android.room` convention plugin (Room Gradle plugin + KSP); it exports schemas to `<module>/schemas` (e.g. `data/receipts/schemas`). Commit schema JSON files and bump the version with a migration for every schema change.
+- **No encryption**: The receipts database is a plain Room database (no SQLCipher), provided as a Hilt singleton. DAO methods are `suspend` or return `Flow`, so Room opens it off the main thread.
+- **Backups**: The `database` domain is excluded from cloud backup and device transfer. Keep it that way: receipt data never leaves the phone.
 - **Entities**: Define Room entities for data persistence
 - **DAOs**: Create Data Access Objects for database operations
 
@@ -224,8 +226,7 @@
 
 ## Security & Privacy
 
-### Data Encryption
-- **SQLCipher**: Encrypt local database
+### Secrets
 - **API Keys**: Never commit API keys to repository
 - **Secrets**: Use environment variables for sensitive configuration
 

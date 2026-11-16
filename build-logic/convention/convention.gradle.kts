@@ -23,6 +23,7 @@ dependencies {
     compileOnly(libs.compose.gradlePlugin)
     compileOnly(libs.ksp.gradlePlugin)
     compileOnly(libs.hilt.gradlePlugin)
+    compileOnly(libs.room.gradlePlugin)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
@@ -59,6 +60,10 @@ gradlePlugin {
         register("hilt") {
             id = "pocketreceipts.hilt"
             implementationClass = "com.bhavnathacker.pocketreceipts.buildlogic.HiltConventionPlugin"
+        }
+        register("androidRoom") {
+            id = "pocketreceipts.android.room"
+            implementationClass = "com.bhavnathacker.pocketreceipts.buildlogic.AndroidRoomConventionPlugin"
         }
         register("androidFeature") {
             id = "pocketreceipts.android.feature"
