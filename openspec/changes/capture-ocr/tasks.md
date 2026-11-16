@@ -12,11 +12,11 @@
 
 ## 2. Domain: scan models and parsers (`:domain`)
 
-- [ ] 2.1 Add `RecognizedText`, `ReceiptScan`, `TextRecognitionRepository` and `ScanImageRepository` in `...domain.scan` (D2), with KDoc. Verify `./gradlew :domain:build` passes.
-- [ ] 2.2 TDD `DateCandidateParser` (D3): numeric, ISO and month-name forms; locale order decides an ambiguous `03/02/2026` (en-IN → 3 Feb, en-US → 2 Mar); a date valid in only one order uses that order; two-digit years; future dates dropped; duplicates removed in order; at most 5. Verify `./gradlew :domain:test` passes.
-- [ ] 2.3 TDD `AmountCandidateParser` (D3): `1,23,456.50`, `1.234,56` and `1 234,56` parse to minor units; phone numbers, years and quantities aren't amounts; the last labelled total comes first and excluded labels (SUBTOTAL, TOTAL TAX, …) don't count; then largest first, at most 8. Currency markers `₹`/`Rs.`/`INR`, `€`, `£`, `¥` (0 decimals), ISO codes, and `$` resolving by default currency. Verify `./gradlew :domain:test` passes.
-- [ ] 2.4 TDD `MerchantCandidateParser` (D3): the first name-like line among the top 5; skips dates, amounts, phone, URL/email and tax-id lines; collapses whitespace; at most 100 characters; null when there is none. Verify `./gradlew :domain:test` passes.
-- [ ] 2.5 TDD `ReceiptScanParser` with the fixtures from D9 (en-IN, en-US, en-GB, de-DE, JPY), one test per expected field, and (usecase skill) `ScanReceiptUseCase`: it returns the parsed scan and deletes the image on success, on recognition failure and on cancellation. Verify `./gradlew :domain:test` passes.
+- [x] 2.1 Add `RecognizedText`, `ReceiptScan`, `TextRecognitionRepository` and `ScanImageRepository` in `...domain.scan` (D2), with KDoc. Verify `./gradlew :domain:build` passes.
+- [x] 2.2 TDD `DateCandidateParser` (D3): numeric, ISO and month-name forms; locale order decides an ambiguous `03/02/2026` (en-IN → 3 Feb, en-US → 2 Mar); a date valid in only one order uses that order; two-digit years; future dates dropped; duplicates removed in order; at most 5. Verify `./gradlew :domain:test` passes.
+- [x] 2.3 TDD `AmountCandidateParser` (D3): `1,23,456.50`, `1.234,56` and `1 234,56` parse to minor units; phone numbers, years and quantities aren't amounts; the last labelled total comes first and excluded labels (SUBTOTAL, TOTAL TAX, …) don't count; then largest first, at most 8. Currency markers `₹`/`Rs.`/`INR`, `€`, `£`, `¥` (0 decimals), ISO codes, and `$` resolving by default currency. Verify `./gradlew :domain:test` passes.
+- [x] 2.4 TDD `MerchantCandidateParser` (D3): the first name-like line among the top 5; skips dates, amounts, phone, URL/email and tax-id lines; collapses whitespace; at most 100 characters; null when there is none. Verify `./gradlew :domain:test` passes.
+- [x] 2.5 TDD `ReceiptScanParser` with the fixtures from D9 (en-IN, en-US, en-GB, de-DE, JPY), one test per expected field, and (usecase skill) `ScanReceiptUseCase`: it returns the parsed scan and deletes the image on success, on recognition failure and on cancellation. Verify `./gradlew :domain:test` passes.
 
 ## 3. Text recognition (`:data:ocr`)
 
