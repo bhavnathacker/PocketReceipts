@@ -11,9 +11,11 @@ import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptFieldError
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptInput
 import com.bhavnathacker.pocketreceipts.domain.receipt.SaveReceiptResult
 import com.bhavnathacker.pocketreceipts.domain.receipt.SaveReceiptUseCase
+import com.bhavnathacker.pocketreceipts.domain.scan.ReceiptScan
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.AmountInputFormatter
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.AmountInputParser
+import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.ScanPrefillToReceiptScanMapper
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model.ReceiptFormUiState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -32,7 +34,9 @@ import java.time.LocalDate
 
 /**
  * The add/edit receipt form: adds a receipt when [receiptId] is `null`,
- * otherwise loads that receipt once and saves changes to it.
+ * otherwise loads that receipt once and saves changes to it. With [scan], it
+ * reviews a scanned receipt: the form starts from the scan's best candidates
+ * and offers the others, and saving adds the receipt.
  */
 @HiltViewModel(assistedFactory = ReceiptFormViewModel.Factory::class)
 internal class ReceiptFormViewModel @AssistedInject constructor(
@@ -42,23 +46,26 @@ internal class ReceiptFormViewModel @AssistedInject constructor(
     getTodayUseCase: GetTodayUseCase,
     private val amountInputParser: AmountInputParser,
     private val amountInputFormatter: AmountInputFormatter,
+    scanPrefillToReceiptScanMapper: ScanPrefillToReceiptScanMapper,
     @Assisted private val receiptId: Long?,
+    @Assisted scan: ScanPrefill?,
 ) : ViewModel() {
 
     @AssistedFactory
     interface Factory {
-        fun create(receiptId: Long?): ReceiptFormViewModel
+        fun create(receiptId: Long?, scan: ScanPrefill?): ReceiptFormViewModel
     }
 
     private val _uiState = MutableStateFlow(
         getTodayUseCase().let { today ->
-            ReceiptFormUiState(
+            val initial = ReceiptFormUiState(
                 isEditing = receiptId != null,
                 isLoading = receiptId != null,
                 today = today,
                 currencyCode = getDefaultCurrencyUseCase(),
                 purchaseDate = today,
             )
+            if (scan == null) initial else initial.prefilledFrom(scanPrefillToReceiptScanMapper(scan))
         },
     )
     val uiState: StateFlow<ReceiptFormUiState> = _uiState.asStateFlow()
@@ -152,12 +159,42 @@ internal class ReceiptFormViewModel @AssistedInject constructor(
         }
     }
 
+    fun onDateCandidateClick(date: LocalDate) {
+        onDateChange(date)
+    }
+
+    fun onTotalCandidateClick(total: Money) {
+        _uiState.update {
+            it.copy(amount = amountInputFormatter(total), currencyCode = total.currencyCode, amountError = null)
+        }
+    }
+
+    fun onNothingRecognizedEventConsumed() {
+        _uiState.update { it.copy(nothingRecognizedEvent = consumed) }
+    }
+
     fun onCloseEventConsumed() {
         _uiState.update { it.copy(closeEvent = consumed) }
     }
 
     fun onSaveFailedEventConsumed() {
         _uiState.update { it.copy(saveFailedEvent = consumed) }
+    }
+
+    private fun ReceiptFormUiState.prefilledFrom(scan: ReceiptScan): ReceiptFormUiState {
+        val dates = scan.dates.filterNot { it.isAfter(today) }
+        val total = scan.totals.firstOrNull()
+        val nothingRecognized = scan.merchant == null && dates.isEmpty() && scan.totals.isEmpty()
+        return copy(
+            isReview = true,
+            merchant = scan.merchant.orEmpty(),
+            purchaseDate = dates.firstOrNull() ?: today,
+            amount = total?.let { amountInputFormatter(it) }.orEmpty(),
+            currencyCode = total?.currencyCode ?: currencyCode,
+            dateCandidates = dates,
+            totalCandidates = scan.totals,
+            nothingRecognizedEvent = if (nothingRecognized) triggered else consumed,
+        )
     }
 
     private fun ReceiptFormUiState.withErrors(

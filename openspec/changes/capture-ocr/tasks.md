@@ -38,8 +38,8 @@
 
 ## 5. Review mode and entry points (`:feature:receipts`, `:core:ui`)
 
-- [ ] 5.1 Add `ScanPrefill`/`ScanAmount` to `ReceiptFormKey`, `receiptReviewKey(scan)`, and (mapper skill, TDD) `ScanPrefillMapper` both ways, with the D6 caps. Verify `./gradlew :feature:receipts:testDebugUnitTest` passes.
-- [ ] 5.2 TDD (viewmodel skill) the review additions to `ReceiptFormViewModel`:
+- [x] 5.1 Add `ScanPrefill`/`ScanAmount` to `ReceiptFormKey`, `receiptReviewKey(scan)`, and (mapper skill, TDD) `ScanPrefillMapper` both ways, with the D6 caps. Verify `./gradlew :feature:receipts:testDebugUnitTest` passes.
+- [x] 5.2 TDD (viewmodel skill) the review additions to `ReceiptFormViewModel`:
   - prefilled merchant, date, total and currency
   - defaults when lists are empty
   - `isReview`
@@ -48,7 +48,7 @@
   - saving through `SaveReceiptUseCase` as an add
   
   Add `onScanClick` to `receiptsEntries`. Verify `./gradlew :feature:receipts:testDebugUnitTest` passes.
-- [ ] 5.3 Add the `ic_photo_camera` drawable to `:core:ui` (`AppIcons.Camera`). Update `ReceiptListScreen` (D7: "Scan receipt" FAB, add action in the top app bar, both actions in the empty state) and `ReceiptFormScreen` (title "Review receipt", candidate `FilterChip` rows with content descriptions, empty-scan snackbar). Add Compose tests, one behavior each. Verify `./gradlew :feature:receipts:connectedDebugAndroidTest` passes.
+- [x] 5.3 Add the `ic_photo_camera` drawable to `:core:ui` (`AppIcons.Camera`). Update `ReceiptListScreen` (D7: "Scan receipt" FAB, add action in the top app bar, both actions in the empty state) and `ReceiptFormScreen` (title "Review receipt", candidate `FilterChip` rows with content descriptions, empty-scan snackbar). Add Compose tests, one behavior each. Verify `./gradlew :feature:receipts:connectedDebugAndroidTest` passes.
 
 ## 6. App wiring (`:app`)
 

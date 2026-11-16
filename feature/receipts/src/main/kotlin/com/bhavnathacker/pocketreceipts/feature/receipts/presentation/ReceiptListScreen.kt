@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
@@ -16,6 +17,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -44,6 +48,7 @@ import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model.Rece
 internal fun ReceiptListRoute(
     onReceiptClick: (Long) -> Unit,
     onAddClick: () -> Unit,
+    onScanClick: () -> Unit,
     viewModel: ReceiptListViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -51,12 +56,14 @@ internal fun ReceiptListRoute(
         uiState = uiState,
         onReceiptClick = onReceiptClick,
         onAddClick = onAddClick,
+        onScanClick = onScanClick,
     )
 }
 
 /**
  * The Receipts destination: the user's receipts, newest first, or an empty
- * state, with an action to add a receipt.
+ * state. Scanning is the main action (the floating button); adding by hand
+ * is in the top app bar. The empty state offers both.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +71,7 @@ internal fun ReceiptListScreen(
     uiState: ReceiptListUiState,
     onReceiptClick: (Long) -> Unit,
     onAddClick: () -> Unit,
+    onScanClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -76,15 +84,26 @@ internal fun ReceiptListScreen(
                         modifier = Modifier.semantics { heading() },
                     )
                 },
+                actions = {
+                    IconButton(onClick = onAddClick) {
+                        Icon(
+                            painter = painterResource(AppIcons.Add),
+                            contentDescription = stringResource(R.string.receipt_add),
+                        )
+                    }
+                },
             )
         },
         floatingActionButton = {
-            // The content overload keeps the label in the semantics tree; the animated
-            // text/icon overload hides it from accessibility services.
-            ExtendedFloatingActionButton(onClick = onAddClick) {
-                Icon(painter = painterResource(AppIcons.Add), contentDescription = null)
-                Spacer(Modifier.width(12.dp))
-                Text(stringResource(R.string.receipt_add))
+            // The empty state shows its own scan and add buttons.
+            if (uiState != ReceiptListUiState.Empty) {
+                // The content overload keeps the label in the semantics tree; the animated
+                // text/icon overload hides it from accessibility services.
+                ExtendedFloatingActionButton(onClick = onScanClick) {
+                    Icon(painter = painterResource(AppIcons.Camera), contentDescription = null)
+                    Spacer(Modifier.width(12.dp))
+                    Text(stringResource(R.string.receipt_scan))
+                }
             }
         },
     ) { padding ->
@@ -102,7 +121,17 @@ internal fun ReceiptListScreen(
                 title = stringResource(R.string.receipt_list_empty_title),
                 body = stringResource(R.string.receipt_list_empty_body),
                 contentPadding = padding,
-            )
+            ) {
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = onScanClick) {
+                    Icon(painter = painterResource(AppIcons.Camera), contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.receipt_scan))
+                }
+                OutlinedButton(onClick = onAddClick) {
+                    Text(stringResource(R.string.receipt_add))
+                }
+            }
 
             ReceiptListUiState.Error -> CenteredMessage(
                 title = stringResource(R.string.receipt_list_error),
@@ -149,6 +178,7 @@ private fun CenteredMessage(
     title: String,
     body: String?,
     contentPadding: PaddingValues,
+    actions: @Composable () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -162,6 +192,7 @@ private fun CenteredMessage(
         if (body != null) {
             Text(text = body, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
         }
+        actions()
     }
 }
 
@@ -180,6 +211,7 @@ private fun ReceiptListScreenPreview() {
             ),
             onReceiptClick = {},
             onAddClick = {},
+            onScanClick = {},
         )
     }
 }
@@ -188,6 +220,11 @@ private fun ReceiptListScreenPreview() {
 @Composable
 private fun ReceiptListScreenEmptyPreview() {
     PocketReceiptsTheme {
-        ReceiptListScreen(uiState = ReceiptListUiState.Empty, onReceiptClick = {}, onAddClick = {})
+        ReceiptListScreen(
+            uiState = ReceiptListUiState.Empty,
+            onReceiptClick = {},
+            onAddClick = {},
+            onScanClick = {},
+        )
     }
 }

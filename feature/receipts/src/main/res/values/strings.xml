@@ -4,14 +4,19 @@
 
     <!-- Receipt list -->
     <string name="receipt_add">Add receipt</string>
+    <string name="receipt_scan">Scan receipt</string>
     <string name="receipt_list_empty_title">No receipts yet</string>
-    <string name="receipt_list_empty_body">Receipts you add will appear here, newest first.</string>
+    <string name="receipt_list_empty_body">Scan a paper receipt or add one by hand. Receipts appear here, newest first.</string>
     <string name="receipt_list_error">Your receipts couldn\'t be opened.</string>
     <string name="receipt_list_item_supporting">%1$s · %2$s</string>
 
     <!-- Receipt form -->
     <string name="receipt_form_add_title">Add receipt</string>
     <string name="receipt_form_edit_title">Edit receipt</string>
+    <string name="receipt_form_review_title">Review receipt</string>
+    <string name="receipt_form_use_total">Use total %1$s</string>
+    <string name="receipt_form_use_date">Use date %1$s</string>
+    <string name="receipt_form_nothing_recognized">Nothing could be read from this scan</string>
     <string name="receipt_form_save">Save</string>
     <string name="receipt_form_close">Close</string>
     <string name="receipt_form_merchant">Merchant</string>

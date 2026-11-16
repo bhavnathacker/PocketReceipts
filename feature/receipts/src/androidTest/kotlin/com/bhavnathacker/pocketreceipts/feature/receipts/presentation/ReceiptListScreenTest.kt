@@ -2,6 +2,7 @@ package com.bhavnathacker.pocketreceipts.feature.receipts.presentation
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -22,6 +23,7 @@ class ReceiptListScreenTest {
 
     private var clickedReceipt: Long? = null
     private var addClicks = 0
+    private var scanClicks = 0
 
     private fun setScreen(uiState: ReceiptListUiState) {
         composeRule.setContent {
@@ -30,6 +32,7 @@ class ReceiptListScreenTest {
                     uiState = uiState,
                     onReceiptClick = { clickedReceipt = it },
                     onAddClick = { addClicks++ },
+                    onScanClick = { scanClicks++ },
                 )
             }
         }
@@ -97,5 +100,32 @@ class ReceiptListScreenTest {
         setScreen(ReceiptListUiState.Error)
 
         composeRule.onNodeWithText("Your receipts couldn't be opened.").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_empty_state_scan_action_reports_the_click() {
+        setScreen(ReceiptListUiState.Empty)
+
+        composeRule.onNodeWithText("Scan receipt").performClick()
+
+        assertThat(scanClicks).isEqualTo(1)
+    }
+
+    @Test
+    fun test_that_the_scan_button_reports_the_click_when_receipts_exist() {
+        setScreen(cornerShop)
+
+        composeRule.onNodeWithText("Scan receipt").performClick()
+
+        assertThat(scanClicks).isEqualTo(1)
+    }
+
+    @Test
+    fun test_that_the_top_bar_add_action_reports_the_click() {
+        setScreen(cornerShop)
+
+        composeRule.onNodeWithContentDescription("Add receipt").performClick()
+
+        assertThat(addClicks).isEqualTo(1)
     }
 }
