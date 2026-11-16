@@ -25,6 +25,12 @@ object AppIcons {
     @DrawableRes val AskFilled = R.drawable.ic_chat_filled
     @DrawableRes val Settings = R.drawable.ic_settings
     @DrawableRes val SettingsFilled = R.drawable.ic_settings_filled
+    @DrawableRes val Add = R.drawable.ic_add
+    @DrawableRes val Edit = R.drawable.ic_edit
+    @DrawableRes val Delete = R.drawable.ic_delete
+    @DrawableRes val Back = R.drawable.ic_arrow_back
+    @DrawableRes val Close = R.drawable.ic_close
+    @DrawableRes val Calendar = R.drawable.ic_calendar_today
 }
 
 @PreviewLightDark
@@ -43,6 +49,30 @@ private fun AppIconsPreview() {
                     AppIcons.AskFilled,
                     AppIcons.Settings,
                     AppIcons.SettingsFilled,
+                ).forEach { icon ->
+                    Icon(painter = painterResource(icon), contentDescription = null)
+                }
+            }
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun AppIconsActionsPreview() {
+    PocketReceiptsTheme {
+        Surface {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                listOf(
+                    AppIcons.Add,
+                    AppIcons.Edit,
+                    AppIcons.Delete,
+                    AppIcons.Back,
+                    AppIcons.Close,
+                    AppIcons.Calendar,
                 ).forEach { icon ->
                     Icon(painter = painterResource(icon), contentDescription = null)
                 }

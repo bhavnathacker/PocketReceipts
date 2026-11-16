@@ -70,7 +70,10 @@ fun PocketReceiptsApp(
                 rememberViewModelStoreNavEntryDecorator(),
             ),
             entryProvider = entryProvider {
-                receiptsEntries()
+                receiptsEntries(
+                    onNavigate = { key -> backStack.add(key) },
+                    onBack = { backStack.removeLastOrNull() },
+                )
                 askEntries()
                 settingsEntries()
             },

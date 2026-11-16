@@ -1,4 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="receipts_title">Receipts</string>
+
+    <!-- Receipt list -->
+    <string name="receipt_add">Add receipt</string>
+    <string name="receipt_list_empty_title">No receipts yet</string>
+    <string name="receipt_list_empty_body">Receipts you add will appear here, newest first.</string>
+    <string name="receipt_list_error">Your receipts couldn\'t be opened.</string>
+    <string name="receipt_list_item_supporting">%1$s · %2$s</string>
+
+    <!-- Receipt form -->
+    <string name="receipt_form_add_title">Add receipt</string>
+    <string name="receipt_form_edit_title">Edit receipt</string>
+    <string name="receipt_form_save">Save</string>
+    <string name="receipt_form_close">Close</string>
+    <string name="receipt_form_merchant">Merchant</string>
+    <string name="receipt_form_amount">Total</string>
+    <string name="receipt_form_currency">Currency</string>
+    <string name="receipt_form_date">Date</string>
+    <string name="receipt_form_choose_date">Choose date</string>
+    <string name="receipt_form_category">Category</string>
+    <string name="receipt_form_note">Note (optional)</string>
+    <string name="receipt_form_currency_search">Search currencies</string>
+    <string name="receipt_form_currency_option">%1$s · %2$s</string>
+    <string name="receipt_form_ok">OK</string>
+    <string name="receipt_form_cancel">Cancel</string>
+    <string name="receipt_form_save_failed">Couldn\'t save the receipt. Try again.</string>
+    <string name="receipt_form_error_merchant_blank">Enter a merchant</string>
+    <string name="receipt_form_error_merchant_too_long">Use 100 characters or fewer</string>
+    <string name="receipt_form_error_amount_invalid">Enter a valid amount</string>
+    <string name="receipt_form_error_amount_not_positive">Enter an amount greater than zero</string>
+    <string name="receipt_form_error_date_future">The date can\'t be in the future</string>
+    <string name="receipt_form_error_note_too_long">Use 500 characters or fewer</string>
+
+    <!-- Receipt detail -->
+    <string name="receipt_detail_title">Receipt</string>
+    <string name="receipt_detail_back">Back</string>
+    <string name="receipt_detail_edit">Edit receipt</string>
+    <string name="receipt_detail_delete">Delete receipt</string>
+    <string name="receipt_detail_date">Date</string>
+    <string name="receipt_detail_category">Category</string>
+    <string name="receipt_detail_note">Note</string>
+    <string name="receipt_detail_delete_title">Delete this receipt?</string>
+    <string name="receipt_detail_delete_body">This can\'t be undone.</string>
+    <string name="receipt_detail_delete_confirm">Delete</string>
+    <string name="receipt_detail_delete_cancel">Cancel</string>
+    <string name="receipt_detail_delete_failed">Couldn\'t delete the receipt. Try again.</string>
+
+    <!-- Categories -->
+    <string name="category_groceries">Groceries</string>
+    <string name="category_dining">Dining</string>
+    <string name="category_transport">Transport</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_bills">Bills</string>
+    <string name="category_health">Health</string>
+    <string name="category_entertainment">Entertainment</string>
+    <string name="category_travel">Travel</string>
+    <string name="category_other">Other</string>
 </resources>

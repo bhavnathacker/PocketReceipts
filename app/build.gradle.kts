@@ -11,6 +11,7 @@ android {
         applicationId = "com.bhavnathacker.pocketreceipts"
         versionCode = 1
         versionName = "1.0"
+        testInstrumentationRunner = "com.bhavnathacker.pocketreceipts.HiltTestRunner"
     }
 
     buildTypes {
@@ -50,5 +51,7 @@ dependencies {
     implementation(libs.compose.state.events)
     androidTestImplementation(project(":core:ui-test"))
     androidTestImplementation(libs.truth)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

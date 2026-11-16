@@ -11,6 +11,8 @@ class TopLevelNavigatorTest {
     private data object Ask : NavKey
     private data object Settings : NavKey
     private data object Detail : NavKey
+    private data class ReceiptDetail(val id: Long) : NavKey
+    private data class ReceiptForm(val id: Long?) : NavKey
 
     private lateinit var backStack: MutableList<NavKey>
     private lateinit var underTest: TopLevelNavigator
@@ -90,5 +92,31 @@ class TopLevelNavigatorTest {
         underTest.select(Settings)
 
         assertThat(backStack).containsExactly(Receipts, Settings).inOrder()
+    }
+
+    @Test
+    fun `test that selectedKey stays the start key when a receipt detail is shown`() {
+        backStack.add(ReceiptDetail(1))
+
+        assertThat(underTest.selectedKey).isEqualTo(Receipts)
+    }
+
+    @Test
+    fun `test that select does not change the back stack when the start destination is reselected from a nested screen`() {
+        backStack.add(ReceiptDetail(1))
+
+        underTest.select(Receipts)
+
+        assertThat(backStack).containsExactly(Receipts, ReceiptDetail(1)).inOrder()
+    }
+
+    @Test
+    fun `test that select clears receipt screens when another destination is selected`() {
+        backStack.add(ReceiptDetail(1))
+        backStack.add(ReceiptForm(1))
+
+        underTest.select(Ask)
+
+        assertThat(backStack).containsExactly(Receipts, Ask).inOrder()
     }
 }

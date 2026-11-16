@@ -1,0 +1,155 @@
+package com.bhavnathacker.pocketreceipts.feature.receipts.presentation
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
+import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
+import com.bhavnathacker.pocketreceipts.feature.receipts.R
+import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model.ReceiptFormUiState
+import com.google.common.truth.Truth.assertThat
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.time.LocalDate
+
+@RunWith(AndroidJUnit4::class)
+class ReceiptFormScreenTest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    private val today = LocalDate.of(2026, 3, 3)
+    private val emptyForm = ReceiptFormUiState(
+        isEditing = false,
+        isLoading = false,
+        today = today,
+        currencyCode = "EUR",
+        purchaseDate = today,
+    )
+
+    private var saves = 0
+    private var closes = 0
+    private var merchant: String? = null
+    private var amount: String? = null
+    private var category: ReceiptCategory? = null
+
+    private fun setScreen(initialState: ReceiptFormUiState) {
+        composeRule.setContent {
+            // Feed typed text back into the state, as the ViewModel does.
+            var uiState by remember { mutableStateOf(initialState) }
+            PocketReceiptsTheme {
+                ReceiptFormScreen(
+                    uiState = uiState,
+                    onClose = { closes++ },
+                    onSave = { saves++ },
+                    onMerchantChange = {
+                        merchant = it
+                        uiState = uiState.copy(merchant = it)
+                    },
+                    onAmountChange = {
+                        amount = it
+                        uiState = uiState.copy(amount = it)
+                    },
+                    onCurrencyChange = {},
+                    onDateChange = {},
+                    onCategoryChange = { category = it },
+                    onNoteChange = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun test_that_a_new_receipt_form_shows_its_defaults() {
+        setScreen(emptyForm)
+
+        composeRule.onNodeWithText("Add receipt").assertIsDisplayed()
+        composeRule.onNodeWithText("EUR").assertIsDisplayed()
+        composeRule.onNodeWithText("Mar 3, 2026", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Other").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_edit_form_is_titled_edit_receipt() {
+        setScreen(emptyForm.copy(isEditing = true, merchant = "Corner Shop"))
+
+        composeRule.onNodeWithText("Edit receipt").assertIsDisplayed()
+        composeRule.onNodeWithText("Corner Shop").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_typing_reports_merchant_and_amount() {
+        setScreen(emptyForm)
+
+        composeRule.onNode(hasText("Merchant") and hasSetTextAction()).performTextInput("Corner Shop")
+        composeRule.onNode(hasText("Total") and hasSetTextAction()).performTextInput("4.50")
+
+        assertThat(merchant).isEqualTo("Corner Shop")
+        assertThat(amount).isEqualTo("4.50")
+    }
+
+    @Test
+    fun test_that_save_and_close_report_their_actions() {
+        setScreen(emptyForm)
+
+        composeRule.onNodeWithText("Save").performClick()
+        composeRule.onNodeWithContentDescription("Close").performClick()
+
+        assertThat(saves).isEqualTo(1)
+        assertThat(closes).isEqualTo(1)
+    }
+
+    @Test
+    fun test_that_field_errors_are_shown() {
+        setScreen(
+            emptyForm.copy(
+                merchantError = R.string.receipt_form_error_merchant_blank,
+                amountError = R.string.receipt_form_error_amount_invalid,
+                noteError = R.string.receipt_form_error_note_too_long,
+            ),
+        )
+
+        composeRule.onNodeWithText("Enter a merchant").assertIsDisplayed()
+        composeRule.onNodeWithText("Enter a valid amount").assertIsDisplayed()
+        composeRule.onNodeWithText("Use 500 characters or fewer").assertExists()
+    }
+
+    @Test
+    fun test_that_save_is_disabled_while_saving() {
+        setScreen(emptyForm.copy(isSaving = true))
+
+        composeRule.onNodeWithText("Save").assertIsNotEnabled()
+    }
+
+    @Test
+    fun test_that_choosing_a_category_reports_it() {
+        setScreen(emptyForm)
+
+        composeRule.onNodeWithText("Other").performClick()
+        composeRule.onNodeWithText("Dining").performClick()
+
+        assertThat(category).isEqualTo(ReceiptCategory.DINING)
+    }
+
+    @Test
+    fun test_that_the_currency_picker_lists_and_filters_currencies() {
+        setScreen(emptyForm)
+
+        composeRule.onNodeWithText("EUR").performClick()
+        composeRule.onNode(hasText("Search currencies") and hasSetTextAction()).performTextInput("rupee")
+
+        composeRule.onNodeWithText("INR", substring = true).assertIsDisplayed()
+    }
+}

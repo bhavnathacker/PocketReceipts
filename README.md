@@ -4,7 +4,12 @@
 
 An Android app for keeping your receipts in your pocket.
 
-> 🚧 Early development — the project currently contains the starter app scaffold.
+> 🚧 Early development. You can add, view, edit and delete receipts by hand. Receipt scanning, on-device AI and Ask are next.
+
+## Features
+
+- **Receipts**: a list of your receipts, newest first. Add one by hand with merchant, date, total, currency and category, plus an optional note. Open a receipt to edit or delete it.
+- **Exact amounts in any currency**: each receipt keeps its own ISO 4217 currency (new ones default to your phone's). Totals are stored as whole minor units (cents, paise...), so nothing is rounded. Amounts are entered and shown in your locale's format, for example `₹1,23,456.50` in India.
 
 ## Tech stack
 
@@ -77,6 +82,11 @@ Run them all with:
 ```bash
 ./gradlew check
 ```
+
+Receipt data is also protected on the device:
+
+- **Encrypted at rest**: the receipts database is encrypted with SQLCipher. Its random passphrase is wrapped by an Android Keystore key that never leaves the device, so the app opens without a password and a copied database file can't be read.
+- **Not backed up or transferred**: the database is excluded from cloud backup and device-to-device transfer (`app/src/main/res/xml/backup_rules.xml`, `data_extraction_rules.xml`), and its wrapped key lives in `noBackupFilesDir`. A copy couldn't be opened on another device anyway, because the key is bound to this one.
 
 ## License
 

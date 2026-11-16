@@ -1,6 +1,5 @@
 package com.bhavnathacker.pocketreceipts
 
-import androidx.activity.ComponentActivity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -19,15 +18,27 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.window.core.layout.WindowSizeClass
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
 import com.google.common.truth.Truth.assertThat
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class PocketReceiptsAppTest {
 
-    @get:Rule
-    val composeRule = createAndroidComposeRule<ComponentActivity>()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createAndroidComposeRule<HiltTestActivity>()
+
+    @Before
+    fun setUp() {
+        hiltRule.inject()
+    }
 
     private val compact = WindowSizeClass(minWidthDp = 0, minHeightDp = 0)
     private val medium = WindowSizeClass(
