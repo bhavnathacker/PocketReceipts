@@ -26,7 +26,7 @@
 
 ## 4. Capture feature (`:feature:capture`)
 
-- [ ] 4.1 Add `CaptureKey`, `CaptureUiState` (`Scanning`, `Reading`, `Unavailable`, `ReadFailed`) and, with TDD (viewmodel skill), `CaptureViewModel`:
+- [x] 4.1 Add `CaptureKey`, `CaptureUiState` (`Scanning`, `Reading`, `Unavailable`, `ReadFailed`) and, with TDD (viewmodel skill), `CaptureViewModel`:
   - `onImageScanned` moves to Reading and fires `scannedEvent` with the scan
   - a failure moves to ReadFailed
   - `onCancel` cancels reading and fires `closeEvent`
@@ -34,7 +34,7 @@
   - `onRetry` moves back to Scanning
   
   Verify `./gradlew :feature:capture:testDebugUnitTest` passes.
-- [ ] 4.2 Implement `CaptureScreen` (stateless: progress with Cancel, Unavailable with "Add receipt manually", ReadFailed with "Try again" and "Add manually"), `CaptureRoute` (scanner options from D5, launched once via `rememberSaveable`, result handling) and `captureEntries(onScanned, onAddManually, onClose)`, with strings and previews. Add Compose tests, one behavior each. Verify `./gradlew :feature:capture:connectedDebugAndroidTest` passes.
+- [x] 4.2 Implement `CaptureScreen` (stateless: progress with Cancel, Unavailable with "Add receipt manually", ReadFailed with "Try again" and "Add manually"), `CaptureRoute` (scanner options from D5, launched once via `rememberSaveable`, result handling) and `captureEntries(onScanned, onAddManually, onClose)`, with strings and previews. Add Compose tests, one behavior each. Verify `./gradlew :feature:capture:connectedDebugAndroidTest` passes.
 
 ## 5. Review mode and entry points (`:feature:receipts`, `:core:ui`)
 

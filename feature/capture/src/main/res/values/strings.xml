@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_reading">Reading receipt…</string>
+    <string name="capture_cancel">Cancel</string>
+    <string name="capture_unavailable_title">Scanning isn\'t available</string>
+    <string name="capture_unavailable_body">This device can\'t run the receipt scanner. Scanning needs Google Play services.</string>
+    <string name="capture_add_receipt_manually">Add receipt manually</string>
+    <string name="capture_read_failed_title">Couldn\'t read this receipt</string>
+    <string name="capture_read_failed_body">The scan couldn\'t be read. Try scanning it again, or enter it yourself.</string>
+    <string name="capture_try_again">Try again</string>
+    <string name="capture_add_manually">Add manually</string>
+</resources>
