@@ -50,6 +50,7 @@ includeModule(":feature:ask")
 includeModule(":feature:modelsetup")
 includeModule(":feature:settings")
 includeModule(":data:receipts")
+includeModule(":data:ocr")
 includeModule(":data:ai")
 includeModule(":data:model-download")
  

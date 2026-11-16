@@ -20,9 +20,9 @@
 
 ## 3. Text recognition (`:data:ocr`)
 
-- [ ] 3.1 Create `:data:ocr` (`includeModule`, `pocketreceipts.android.library` + `pocketreceipts.hilt`, depends on `:domain`, `text-recognition`, timber) and add it to `:app`. Verify `./gradlew check` passes, including `verifyModuleDependencies` and the privacy checks.
-- [ ] 3.2 TDD `OcrRowAssembler` on the JVM (D4): lines on the same visual row are joined left to right, rows are sorted top to bottom, and a slightly skewed row still groups. Verify `./gradlew :data:ocr:testDebugUnitTest` passes.
-- [ ] 3.3 Implement `MlKitTextRecognitionRepository` (on `@IoDispatcher`, recognizer closed in `finally`), `FileScanImageRepository` (deletes only `file:` URIs inside `cacheDir`, or the location found in 1.2), and the internal `OcrDataModule`. Add instrumented tests that draw "TOTAL" and "210.00" at both ends of one row onto a bitmap in `cacheDir`, check that recognition returns a row containing both, and check that delete removes the file and ignores a URI outside the cache. Verify `./gradlew :data:ocr:connectedDebugAndroidTest` passes.
+- [x] 3.1 Create `:data:ocr` (`includeModule`, `pocketreceipts.android.library` + `pocketreceipts.hilt`, depends on `:domain`, `text-recognition`, timber) and add it to `:app`. Verify `./gradlew check` passes, including `verifyModuleDependencies` and the privacy checks.
+- [x] 3.2 TDD `OcrRowAssembler` on the JVM (D4): lines on the same visual row are joined left to right, rows are sorted top to bottom, and a slightly skewed row still groups. Verify `./gradlew :data:ocr:testDebugUnitTest` passes.
+- [x] 3.3 Implement `MlKitTextRecognitionRepository` (on `@IoDispatcher`, recognizer closed in `finally`), `FileScanImageRepository` (deletes only `file:` URIs inside `cacheDir`, or the location found in 1.2), and the internal `OcrDataModule`. Add instrumented tests that draw "TOTAL" and "210.00" at both ends of one row onto a bitmap in `cacheDir`, check that recognition returns a row containing both, and check that delete removes the file and ignores a URI outside the cache. Verify `./gradlew :data:ocr:connectedDebugAndroidTest` passes.
 
 ## 4. Capture feature (`:feature:capture`)
 
