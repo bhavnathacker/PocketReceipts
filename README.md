@@ -83,10 +83,7 @@ Run them all with:
 ./gradlew check
 ```
 
-Receipt data is also protected on the device:
-
-- **Encrypted at rest**: the receipts database is encrypted with SQLCipher. Its random passphrase is wrapped by an Android Keystore key that never leaves the device, so the app opens without a password and a copied database file can't be read.
-- **Not backed up or transferred**: the database is excluded from cloud backup and device-to-device transfer (`app/src/main/res/xml/backup_rules.xml`, `data_extraction_rules.xml`), and its wrapped key lives in `noBackupFilesDir`. A copy couldn't be opened on another device anyway, because the key is bound to this one.
+Receipts are also kept out of backups: the receipts database is excluded from cloud backup and device-to-device transfer (`app/src/main/res/xml/backup_rules.xml`, `data_extraction_rules.xml`), so receipts stay on this phone.
 
 ## License
 

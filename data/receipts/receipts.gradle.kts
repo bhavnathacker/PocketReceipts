@@ -6,8 +6,6 @@ plugins {
 
 dependencies {
     implementation(project(":domain"))
-    implementation(libs.sqlcipher.android)
-    implementation(libs.androidx.sqlite)
     implementation(libs.timber)
 
     androidTestImplementation(libs.androidx.junit)

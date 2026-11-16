@@ -31,12 +31,12 @@ class GetDefaultCurrencyUseCaseTest {
     }
 
     @Test
-    fun `test that invoke returns EUR when locale has no region`() {
-        assertThat(underTest(Locale.forLanguageTag("en"))).isEqualTo("EUR")
+    fun `test that invoke returns INR when locale has no region`() {
+        assertThat(underTest(Locale.forLanguageTag("en"))).isEqualTo("INR")
     }
 
     @Test
-    fun `test that invoke returns EUR when region has no currency`() {
-        assertThat(underTest(Locale.forLanguageTag("en-AQ"))).isEqualTo("EUR")
+    fun `test that invoke returns INR when region has no currency`() {
+        assertThat(underTest(Locale.forLanguageTag("en-AQ"))).isEqualTo("INR")
     }
 }

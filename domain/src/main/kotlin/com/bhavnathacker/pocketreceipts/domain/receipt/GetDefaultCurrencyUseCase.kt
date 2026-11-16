@@ -17,6 +17,6 @@ class GetDefaultCurrencyUseCase @Inject constructor() {
             ?: FALLBACK_CURRENCY
 
     companion object {
-        const val FALLBACK_CURRENCY = "EUR"
+        const val FALLBACK_CURRENCY = "INR"
     }
 }

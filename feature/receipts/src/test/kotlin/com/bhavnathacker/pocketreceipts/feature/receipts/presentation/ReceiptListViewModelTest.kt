@@ -120,7 +120,7 @@ class ReceiptListViewModelTest {
     @Test
     fun `test that state is Error when receipts cannot be loaded`() = runTest {
         monitorReceiptsUseCase.stub {
-            on { invoke() } doReturn flow { throw IllegalStateException("bad key") }
+            on { invoke() } doReturn flow { throw IllegalStateException("db") }
         }
         initViewModel()
 

@@ -71,8 +71,8 @@ class ReceiptsConfigurationChangeTest {
         }
     }
 
-    @Test
-    fun test_that_the_edit_form_keeps_typed_input_when_the_activity_is_recreated() {
+    /** Opens the edit form, types a new merchant and total, then recreates the activity. */
+    private fun editAndRecreate() {
         waitForText("Corner Shop")
         composeRule.onNodeWithText("Corner Shop").performClick()
         composeRule.onNodeWithContentDescription("Edit receipt").performClick()
@@ -83,10 +83,33 @@ class ReceiptsConfigurationChangeTest {
         field("Total").performTextInput("7.25")
 
         composeRule.activityRule.scenario.recreate()
+    }
+
+    @Test
+    fun test_that_the_edit_form_stays_open_when_the_activity_is_recreated() {
+        editAndRecreate()
 
         composeRule.onNodeWithText("Edit receipt").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_edit_form_keeps_the_typed_merchant_when_the_activity_is_recreated() {
+        editAndRecreate()
+
         composeRule.onNodeWithText("Corner Market").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_edit_form_keeps_the_typed_total_when_the_activity_is_recreated() {
+        editAndRecreate()
+
         composeRule.onNodeWithText("7.25").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_receipts_stays_selected_when_the_activity_is_recreated() {
+        editAndRecreate()
+
         composeRule.onNode(
             hasText("Receipts") and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab),
         ).assertIsSelected()

@@ -39,6 +39,7 @@ class ReceiptDetailScreenTest {
     private var edits = 0
     private var deletesConfirmed = 0
     private var backs = 0
+    private var deleteDismisses = 0
 
     /** Hosts the screen with the confirmation dialog state handled as the ViewModel does. */
     private fun setScreen(initialState: ReceiptDetailUiState = loaded) {
@@ -54,55 +55,104 @@ class ReceiptDetailScreenTest {
                         deletesConfirmed++
                         uiState = uiState.copy(showDeleteConfirmation = false)
                     },
-                    onDeleteDismiss = { uiState = uiState.copy(showDeleteConfirmation = false) },
+                    onDeleteDismiss = {
+                        deleteDismisses++
+                        uiState = uiState.copy(showDeleteConfirmation = false)
+                    },
                 )
             }
         }
     }
 
     @Test
-    fun test_that_all_fields_are_shown() {
+    fun test_that_the_merchant_is_shown() {
         setScreen()
 
         composeRule.onNodeWithText("Corner Shop").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_total_is_shown() {
+        setScreen()
+
         composeRule.onNodeWithText("£4.50").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_date_is_shown() {
+        setScreen()
+
         composeRule.onNodeWithText("3 Mar 2026", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_category_is_shown() {
+        setScreen()
+
         composeRule.onNodeWithText("Groceries", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_note_is_shown() {
+        setScreen()
+
         composeRule.onNodeWithText("milk", substring = true).assertIsDisplayed()
     }
 
     @Test
-    fun test_that_edit_and_back_report_their_actions() {
+    fun test_that_edit_reports_the_edit_action() {
         setScreen()
 
         composeRule.onNodeWithContentDescription("Edit receipt").performClick()
-        composeRule.onNodeWithContentDescription("Back").performClick()
 
         assertThat(edits).isEqualTo(1)
+    }
+
+    @Test
+    fun test_that_back_reports_the_back_action() {
+        setScreen()
+
+        composeRule.onNodeWithContentDescription("Back").performClick()
+
         assertThat(backs).isEqualTo(1)
     }
 
     @Test
-    fun test_that_confirming_delete_deletes() {
+    fun test_that_delete_shows_the_confirmation() {
         setScreen()
 
         composeRule.onNodeWithContentDescription("Delete receipt").performClick()
-        composeRule.onNodeWithText("Delete this receipt?").assertIsDisplayed()
-        composeRule.onNodeWithText("Delete").performClick()
 
-        assertThat(deletesConfirmed).isEqualTo(1)
-        composeRule.onNodeWithText("Delete this receipt?").assertDoesNotExist()
+        composeRule.onNodeWithText("Delete this receipt?").assertIsDisplayed()
     }
 
     @Test
-    fun test_that_cancelling_delete_keeps_the_receipt() {
+    fun test_that_confirming_delete_reports_the_delete() {
         setScreen()
-
         composeRule.onNodeWithContentDescription("Delete receipt").performClick()
+
+        composeRule.onNodeWithText("Delete").performClick()
+
+        assertThat(deletesConfirmed).isEqualTo(1)
+    }
+
+    @Test
+    fun test_that_cancelling_delete_reports_the_dismiss() {
+        setScreen()
+        composeRule.onNodeWithContentDescription("Delete receipt").performClick()
+
+        composeRule.onNodeWithText("Cancel").performClick()
+
+        assertThat(deleteDismisses).isEqualTo(1)
+    }
+
+    @Test
+    fun test_that_cancelling_delete_does_not_report_a_delete() {
+        setScreen()
+        composeRule.onNodeWithContentDescription("Delete receipt").performClick()
+
         composeRule.onNodeWithText("Cancel").performClick()
 
         assertThat(deletesConfirmed).isEqualTo(0)
-        composeRule.onNodeWithText("Delete this receipt?").assertDoesNotExist()
-        composeRule.onNodeWithText("Corner Shop").assertIsDisplayed()
     }
 }

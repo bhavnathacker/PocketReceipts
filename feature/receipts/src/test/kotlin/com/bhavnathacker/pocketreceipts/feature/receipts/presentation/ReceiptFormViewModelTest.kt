@@ -27,7 +27,6 @@ import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.stub
 import org.mockito.kotlin.verify
@@ -93,28 +92,66 @@ class ReceiptFormViewModelTest {
         underTest.onAmountChange("4.50")
     }
 
-    @Test
-    fun `test that a new receipt starts with today, the default currency and Other`() = runTest {
-        initViewModel()
+    private fun stubInvalid(vararg errors: ReceiptFieldError) {
+        saveReceiptUseCase.stub {
+            onBlocking { invoke(anyOrNull(), any()) } doReturn SaveReceiptResult.Invalid(errors.toSet())
+        }
+    }
 
-        val state = underTest.uiState.value
-        assertThat(state.isEditing).isFalse()
-        assertThat(state.isLoading).isFalse()
-        assertThat(state.merchant).isEmpty()
-        assertThat(state.amount).isEmpty()
-        assertThat(state.purchaseDate).isEqualTo(today)
-        assertThat(state.today).isEqualTo(today)
-        assertThat(state.currencyCode).isEqualTo("INR")
-        assertThat(state.category).isEqualTo(ReceiptCategory.OTHER)
-        assertThat(state.note).isEmpty()
+    private fun stubSaveThrows() {
+        saveReceiptUseCase.stub {
+            onBlocking { invoke(anyOrNull(), any()) } doSuspendableAnswer { throw IllegalStateException("db") }
+        }
     }
 
     @Test
-    fun `test that editing pre-fills the form with the receipt`() = runTest {
+    fun `test that init sets the purchase date to today when adding a receipt`() = runTest {
+        initViewModel()
+
+        assertThat(underTest.uiState.value.purchaseDate).isEqualTo(today)
+    }
+
+    @Test
+    fun `test that init sets the default currency when adding a receipt`() = runTest {
+        initViewModel()
+
+        assertThat(underTest.uiState.value.currencyCode).isEqualTo("INR")
+    }
+
+    @Test
+    fun `test that init sets the category to Other when adding a receipt`() = runTest {
+        initViewModel()
+
+        assertThat(underTest.uiState.value.category).isEqualTo(ReceiptCategory.OTHER)
+    }
+
+    @Test
+    fun `test that init leaves the text fields empty when adding a receipt`() = runTest {
+        initViewModel()
+
+        val state = underTest.uiState.value
+        assertThat(listOf(state.merchant, state.amount, state.note)).containsExactly("", "", "")
+    }
+
+    @Test
+    fun `test that init is not in edit mode when adding a receipt`() = runTest {
+        initViewModel()
+
+        assertThat(underTest.uiState.value.isEditing).isFalse()
+    }
+
+    @Test
+    fun `test that init is in edit mode when editing a receipt`() = runTest {
+        initViewModel(receiptId = 7)
+
+        assertThat(underTest.uiState.value.isEditing).isTrue()
+    }
+
+    @Test
+    fun `test that init pre-fills the form with the receipt when editing a receipt`() = runTest {
         initViewModel(receiptId = 7)
 
         val state = underTest.uiState.value
-        assertThat(state.isEditing).isTrue()
         assertThat(state.isLoading).isFalse()
         assertThat(state.merchant).isEqualTo("Corner Shop")
         assertThat(state.amount).isEqualTo("123456.50")
@@ -125,7 +162,7 @@ class ReceiptFormViewModelTest {
     }
 
     @Test
-    fun `test that editing fires closeEvent when receipt not found`() = runTest {
+    fun `test that init fires closeEvent when the edited receipt is not found`() = runTest {
         monitorReceiptUseCase.stub { on { invoke(7) } doReturn flowOf(null) }
         initViewModel(receiptId = 7)
 
@@ -133,23 +170,57 @@ class ReceiptFormViewModelTest {
     }
 
     @Test
-    fun `test that field changes update the state`() = runTest {
+    fun `test that onMerchantChange updates the merchant`() = runTest {
         initViewModel()
 
         underTest.onMerchantChange("Corner Shop")
+
+        assertThat(underTest.uiState.value.merchant).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that onAmountChange updates the amount`() = runTest {
+        initViewModel()
+
         underTest.onAmountChange("4.50")
+
+        assertThat(underTest.uiState.value.amount).isEqualTo("4.50")
+    }
+
+    @Test
+    fun `test that onCurrencyChange updates the currency`() = runTest {
+        initViewModel()
+
         underTest.onCurrencyChange("EUR")
+
+        assertThat(underTest.uiState.value.currencyCode).isEqualTo("EUR")
+    }
+
+    @Test
+    fun `test that onCategoryChange updates the category`() = runTest {
+        initViewModel()
+
         underTest.onCategoryChange(ReceiptCategory.DINING)
+
+        assertThat(underTest.uiState.value.category).isEqualTo(ReceiptCategory.DINING)
+    }
+
+    @Test
+    fun `test that onNoteChange updates the note`() = runTest {
+        initViewModel()
+
         underTest.onNoteChange("lunch")
+
+        assertThat(underTest.uiState.value.note).isEqualTo("lunch")
+    }
+
+    @Test
+    fun `test that onDateChange updates the purchase date`() = runTest {
+        initViewModel()
+
         underTest.onDateChange(LocalDate.of(2026, 3, 2))
 
-        val state = underTest.uiState.value
-        assertThat(state.merchant).isEqualTo("Corner Shop")
-        assertThat(state.amount).isEqualTo("4.50")
-        assertThat(state.currencyCode).isEqualTo("EUR")
-        assertThat(state.category).isEqualTo(ReceiptCategory.DINING)
-        assertThat(state.note).isEqualTo("lunch")
-        assertThat(state.purchaseDate).isEqualTo(LocalDate.of(2026, 3, 2))
+        assertThat(underTest.uiState.value.purchaseDate).isEqualTo(LocalDate.of(2026, 3, 2))
     }
 
     @Test
@@ -162,7 +233,16 @@ class ReceiptFormViewModelTest {
     }
 
     @Test
-    fun `test that onSave saves a new receipt with the parsed amount and fires closeEvent`() = runTest {
+    fun `test that onMerchantChange does not reload the edited receipt`() = runTest {
+        initViewModel(receiptId = 7)
+
+        underTest.onMerchantChange("Changed")
+
+        assertThat(underTest.uiState.value.merchant).isEqualTo("Changed")
+    }
+
+    @Test
+    fun `test that onSave saves a new receipt with the parsed amount`() = runTest {
         initViewModel()
         fillValidForm()
         underTest.onNoteChange("lunch")
@@ -179,6 +259,15 @@ class ReceiptFormViewModelTest {
                 note = "lunch",
             ),
         )
+    }
+
+    @Test
+    fun `test that onSave fires closeEvent when the receipt is saved`() = runTest {
+        initViewModel()
+        fillValidForm()
+
+        underTest.onSave()
+
         assertThat(underTest.uiState.value.closeEvent).isEqualTo(StateEvent.Triggered)
     }
 
@@ -216,24 +305,19 @@ class ReceiptFormViewModelTest {
     @Test
     fun `test that onSave shows the invalid amount error when the amount cannot be parsed`() = runTest {
         amountInputParser.stub { on { invoke(any(), any(), any()) } doReturn null }
-        saveReceiptUseCase.stub {
-            onBlocking { invoke(anyOrNull(), any()) } doReturn SaveReceiptResult.Invalid(setOf(ReceiptFieldError.TotalNotPositive))
-        }
+        stubInvalid(ReceiptFieldError.TotalNotPositive)
         initViewModel()
         fillValidForm()
 
         underTest.onSave()
 
         assertThat(underTest.uiState.value.amountError).isEqualTo(R.string.receipt_form_error_amount_invalid)
-        assertThat(underTest.uiState.value.closeEvent).isEqualTo(StateEvent.Consumed)
     }
 
     @Test
     fun `test that onSave shows the zero amount error when the amount is zero`() = runTest {
         amountInputParser.stub { on { invoke(any(), any(), any()) } doReturn 0L }
-        saveReceiptUseCase.stub {
-            onBlocking { invoke(anyOrNull(), any()) } doReturn SaveReceiptResult.Invalid(setOf(ReceiptFieldError.TotalNotPositive))
-        }
+        stubInvalid(ReceiptFieldError.TotalNotPositive)
         initViewModel()
         fillValidForm()
 
@@ -244,11 +328,7 @@ class ReceiptFormViewModelTest {
 
     @Test
     fun `test that onSave shows an error for every invalid field`() = runTest {
-        saveReceiptUseCase.stub {
-            onBlocking { invoke(anyOrNull(), any()) } doReturn SaveReceiptResult.Invalid(
-                setOf(ReceiptFieldError.MerchantBlank, ReceiptFieldError.NoteTooLong, ReceiptFieldError.DateInFuture),
-            )
-        }
+        stubInvalid(ReceiptFieldError.MerchantBlank, ReceiptFieldError.NoteTooLong, ReceiptFieldError.DateInFuture)
         initViewModel()
 
         underTest.onSave()
@@ -257,15 +337,22 @@ class ReceiptFormViewModelTest {
         assertThat(state.merchantError).isEqualTo(R.string.receipt_form_error_merchant_blank)
         assertThat(state.noteError).isEqualTo(R.string.receipt_form_error_note_too_long)
         assertThat(state.dateError).isEqualTo(R.string.receipt_form_error_date_future)
-        assertThat(state.amountError).isNull()
-        assertThat(state.closeEvent).isEqualTo(StateEvent.Consumed)
+    }
+
+    @Test
+    fun `test that onSave shows no error for a valid field when other fields are invalid`() = runTest {
+        stubInvalid(ReceiptFieldError.MerchantBlank)
+        initViewModel()
+        fillValidForm()
+
+        underTest.onSave()
+
+        assertThat(underTest.uiState.value.amountError).isNull()
     }
 
     @Test
     fun `test that onSave shows the merchant too long error`() = runTest {
-        saveReceiptUseCase.stub {
-            onBlocking { invoke(anyOrNull(), any()) } doReturn SaveReceiptResult.Invalid(setOf(ReceiptFieldError.MerchantTooLong))
-        }
+        stubInvalid(ReceiptFieldError.MerchantTooLong)
         initViewModel()
 
         underTest.onSave()
@@ -274,23 +361,59 @@ class ReceiptFormViewModelTest {
     }
 
     @Test
-    fun `test that editing a field clears its error`() = runTest {
-        saveReceiptUseCase.stub {
-            onBlocking { invoke(anyOrNull(), any()) } doReturn SaveReceiptResult.Invalid(
-                setOf(ReceiptFieldError.MerchantBlank, ReceiptFieldError.TotalNotPositive, ReceiptFieldError.NoteTooLong),
-            )
-        }
+    fun `test that onSave does not fire closeEvent when validation fails`() = runTest {
+        stubInvalid(ReceiptFieldError.MerchantBlank)
+        initViewModel()
+
+        underTest.onSave()
+
+        assertThat(underTest.uiState.value.closeEvent).isEqualTo(StateEvent.Consumed)
+    }
+
+    @Test
+    fun `test that onMerchantChange clears the merchant error`() = runTest {
+        stubInvalid(ReceiptFieldError.MerchantBlank)
         initViewModel()
         underTest.onSave()
 
         underTest.onMerchantChange("C")
+
+        assertThat(underTest.uiState.value.merchantError).isNull()
+    }
+
+    @Test
+    fun `test that onAmountChange clears the amount error`() = runTest {
+        stubInvalid(ReceiptFieldError.TotalNotPositive)
+        initViewModel()
+        underTest.onSave()
+
         underTest.onAmountChange("1")
+
+        assertThat(underTest.uiState.value.amountError).isNull()
+    }
+
+    @Test
+    fun `test that onNoteChange clears the note error`() = runTest {
+        stubInvalid(ReceiptFieldError.NoteTooLong)
+        initViewModel()
+        underTest.onSave()
+
         underTest.onNoteChange("n")
 
-        val state = underTest.uiState.value
-        assertThat(state.merchantError).isNull()
-        assertThat(state.amountError).isNull()
-        assertThat(state.noteError).isNull()
+        assertThat(underTest.uiState.value.noteError).isNull()
+    }
+
+    @Test
+    fun `test that onSave sets isSaving while the save is in progress`() = runTest {
+        saveReceiptUseCase.stub {
+            onBlocking { invoke(anyOrNull(), any()) } doSuspendableAnswer { kotlinx.coroutines.awaitCancellation() }
+        }
+        initViewModel()
+        fillValidForm()
+
+        underTest.onSave()
+
+        assertThat(underTest.uiState.value.isSaving).isTrue()
     }
 
     @Test
@@ -304,46 +427,62 @@ class ReceiptFormViewModelTest {
         underTest.onSave()
         underTest.onSave()
 
-        assertThat(underTest.uiState.value.isSaving).isTrue()
         verify(saveReceiptUseCase).invoke(anyOrNull(), any())
     }
 
     @Test
     fun `test that onSave fires saveFailedEvent when saving throws`() = runTest {
-        saveReceiptUseCase.stub {
-            onBlocking { invoke(anyOrNull(), any()) } doSuspendableAnswer { throw IllegalStateException("db") }
-        }
+        stubSaveThrows()
         initViewModel()
         fillValidForm()
 
         underTest.onSave()
 
-        val state = underTest.uiState.value
-        assertThat(state.isSaving).isFalse()
-        assertThat(state.saveFailedEvent).isEqualTo(StateEvent.Triggered)
-        assertThat(state.closeEvent).isEqualTo(StateEvent.Consumed)
+        assertThat(underTest.uiState.value.saveFailedEvent).isEqualTo(StateEvent.Triggered)
     }
 
     @Test
-    fun `test that consuming events resets them`() = runTest {
+    fun `test that onSave clears isSaving when saving throws`() = runTest {
+        stubSaveThrows()
+        initViewModel()
+        fillValidForm()
+
+        underTest.onSave()
+
+        assertThat(underTest.uiState.value.isSaving).isFalse()
+    }
+
+    @Test
+    fun `test that onSave does not fire closeEvent when saving throws`() = runTest {
+        stubSaveThrows()
+        initViewModel()
+        fillValidForm()
+
+        underTest.onSave()
+
+        assertThat(underTest.uiState.value.closeEvent).isEqualTo(StateEvent.Consumed)
+    }
+
+    @Test
+    fun `test that onCloseEventConsumed resets closeEvent`() = runTest {
         initViewModel()
         fillValidForm()
         underTest.onSave()
 
         underTest.onCloseEventConsumed()
-        underTest.onSaveFailedEventConsumed()
 
         assertThat(underTest.uiState.value.closeEvent).isEqualTo(StateEvent.Consumed)
-        assertThat(underTest.uiState.value.saveFailedEvent).isEqualTo(StateEvent.Consumed)
     }
 
     @Test
-    fun `test that the edit form does not reload after the user starts typing`() = runTest {
-        initViewModel(receiptId = 7)
+    fun `test that onSaveFailedEventConsumed resets saveFailedEvent`() = runTest {
+        stubSaveThrows()
+        initViewModel()
+        fillValidForm()
+        underTest.onSave()
 
-        underTest.onMerchantChange("Changed")
+        underTest.onSaveFailedEventConsumed()
 
-        assertThat(underTest.uiState.value.merchant).isEqualTo("Changed")
-        verify(saveReceiptUseCase, never()).invoke(anyOrNull(), any())
+        assertThat(underTest.uiState.value.saveFailedEvent).isEqualTo(StateEvent.Consumed)
     }
 }

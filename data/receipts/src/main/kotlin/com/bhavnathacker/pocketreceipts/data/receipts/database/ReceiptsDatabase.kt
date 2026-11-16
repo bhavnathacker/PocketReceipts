@@ -3,10 +3,7 @@ package com.bhavnathacker.pocketreceipts.data.receipts.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 
-/**
- * The encrypted on-device receipts database. See `ReceiptsDatabaseProvider`
- * for how it is opened.
- */
+/** The on-device receipts database. */
 @Database(
     entities = [ReceiptEntity::class],
     version = 1,

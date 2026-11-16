@@ -208,8 +208,8 @@
 
 ### Database
 - **Room**: Use Room for local database operations. Apply the `pocketreceipts.android.room` convention plugin (Room Gradle plugin + KSP); it exports schemas to `<module>/schemas` (e.g. `data/receipts/schemas`). Commit schema JSON files and bump the version with a migration for every schema change.
-- **SQLCipher**: The receipts database is encrypted with SQLCipher (`SupportOpenHelperFactory`); its passphrase is wrapped by an Android Keystore key and stored in `noBackupFilesDir`. Open it through `ReceiptsDatabaseProvider`, never on the main thread or during injection.
-- **Backups**: The `database` domain is excluded from cloud backup and device transfer. Keep it that way: a restored copy can't be decrypted without the device-bound key.
+- **No encryption**: The receipts database is a plain Room database (no SQLCipher), provided as a Hilt singleton. DAO methods are `suspend` or return `Flow`, so Room opens it off the main thread.
+- **Backups**: The `database` domain is excluded from cloud backup and device transfer. Keep it that way: receipt data never leaves the phone.
 - **Entities**: Define Room entities for data persistence
 - **DAOs**: Create Data Access Objects for database operations
 
@@ -226,8 +226,7 @@
 
 ## Security & Privacy
 
-### Data Encryption
-- **SQLCipher**: Encrypt local database
+### Secrets
 - **API Keys**: Never commit API keys to repository
 - **Secrets**: Use environment variables for sensitive configuration
 

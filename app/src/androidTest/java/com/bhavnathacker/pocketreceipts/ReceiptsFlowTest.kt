@@ -34,7 +34,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 /**
- * Receipt flows through the whole app, against the real encrypted database.
+ * Receipt flows through the whole app, against the real database.
  * Each test starts with no receipts.
  */
 @HiltAndroidTest
@@ -105,6 +105,34 @@ class ReceiptsFlowTest {
         composeRule.waitForIdle()
     }
 
+    private fun storedReceipts() = runBlocking { receiptRepository.monitorReceipts().first() }
+
+    /** Opens the detail screen of the seeded receipt and switches to Ask. */
+    private fun openDetailThenSwitchToAsk() {
+        addReceipt()
+        setApp()
+        waitForText("Corner Shop")
+        composeRule.onNodeWithText("Corner Shop").performClick()
+        composeRule.onNodeWithContentDescription("Edit receipt").assertIsDisplayed()
+        navItem("Ask").performClick()
+    }
+
+    private fun openAddFormWithoutMerchant() {
+        setApp()
+        waitForText("No receipts yet")
+        composeRule.onNodeWithText("Add receipt").performClick()
+        field("Total").performTextInput("4.50")
+    }
+
+    private fun openDetailAndConfirmDelete() {
+        addReceipt()
+        setApp()
+        waitForText("Corner Shop")
+        composeRule.onNodeWithText("Corner Shop").performClick()
+        composeRule.onNodeWithContentDescription("Delete receipt").performClick()
+        composeRule.onNodeWithText("Delete").performClick()
+    }
+
     @Test
     fun test_that_receipts_stays_selected_on_the_detail_screen() {
         addReceipt()
@@ -113,71 +141,89 @@ class ReceiptsFlowTest {
 
         composeRule.onNodeWithText("Corner Shop").performClick()
 
-        composeRule.onNodeWithContentDescription("Edit receipt").assertIsDisplayed()
         navItem("Receipts").assertIsSelected()
     }
 
     @Test
-    fun test_that_switching_tabs_from_detail_and_back_shows_the_list() {
+    fun test_that_back_after_switching_tabs_from_detail_shows_the_receipts_list() {
+        openDetailThenSwitchToAsk()
+
+        pressBack()
+
+        composeRule.onNode(hasText("Receipts") and isHeading()).assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_back_after_switching_tabs_from_detail_does_not_show_the_detail_screen() {
+        openDetailThenSwitchToAsk()
+
+        pressBack()
+
+        composeRule.onNodeWithContentDescription("Edit receipt").assertDoesNotExist()
+    }
+
+    @Test
+    fun test_that_adding_a_receipt_shows_it_in_the_list() {
+        setApp()
+        waitForText("No receipts yet")
+        composeRule.onNodeWithText("Add receipt").performClick()
+        field("Merchant").performTextInput("  Corner Shop  ")
+        field("Total").performTextInput("4.50")
+
+        composeRule.onNodeWithText("Save").performClick()
+
+        waitForText("$4.50")
+        composeRule.onNodeWithText("Corner Shop").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_editing_a_receipt_shows_the_new_total_on_the_detail_screen() {
         addReceipt()
         setApp()
         waitForText("Corner Shop")
         composeRule.onNodeWithText("Corner Shop").performClick()
-        composeRule.onNodeWithContentDescription("Edit receipt").assertIsDisplayed()
-
-        navItem("Ask").performClick()
-        pressBack()
-
-        composeRule.onNode(hasText("Receipts") and isHeading()).assertIsDisplayed()
-        composeRule.onNodeWithText("Corner Shop").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Edit receipt").assertDoesNotExist()
-        navItem("Receipts").assertIsSelected()
-    }
-
-    @Test
-    fun test_that_a_receipt_can_be_added_edited_and_deleted() {
-        setApp()
-        waitForText("No receipts yet")
-
-        // Add
-        composeRule.onNodeWithText("Add receipt").performClick()
-        field("Merchant").performTextInput("  Corner Shop  ")
-        field("Total").performTextInput("4.50")
-        composeRule.onNodeWithText("Save").performClick()
-        waitForText("$4.50")
-        composeRule.onNodeWithText("Corner Shop").assertIsDisplayed()
-
-        // Edit
-        composeRule.onNodeWithText("Corner Shop").performClick()
-        waitForText("$4.50")
         composeRule.onNodeWithContentDescription("Edit receipt").performClick()
         waitForText("Edit receipt")
         field("Total").performTextClearance()
         field("Total").performTextInput("5.00")
+
         composeRule.onNodeWithText("Save").performClick()
+
         waitForText("$5.00")
         composeRule.onNodeWithContentDescription("Delete receipt").assertIsDisplayed()
-
-        // Delete
-        composeRule.onNodeWithContentDescription("Delete receipt").performClick()
-        composeRule.onNodeWithText("Delete").performClick()
-        waitForText("No receipts yet")
-
-        val stored = runBlocking { receiptRepository.monitorReceipts().first() }
-        assertThat(stored).isEmpty()
     }
 
     @Test
-    fun test_that_saving_without_a_merchant_shows_an_error_and_saves_nothing() {
-        setApp()
+    fun test_that_deleting_the_only_receipt_shows_the_empty_list() {
+        openDetailAndConfirmDelete()
+
         waitForText("No receipts yet")
-        composeRule.onNodeWithText("Add receipt").performClick()
-        field("Total").performTextInput("4.50")
+    }
+
+    @Test
+    fun test_that_deleting_a_receipt_removes_it_from_storage() {
+        openDetailAndConfirmDelete()
+
+        waitForText("No receipts yet")
+        assertThat(storedReceipts()).isEmpty()
+    }
+
+    @Test
+    fun test_that_saving_without_a_merchant_shows_an_error() {
+        openAddFormWithoutMerchant()
 
         composeRule.onNodeWithText("Save").performClick()
 
         waitForText("Enter a merchant")
-        val stored = runBlocking { receiptRepository.monitorReceipts().first() }
-        assertThat(stored).isEmpty()
+    }
+
+    @Test
+    fun test_that_saving_without_a_merchant_saves_nothing() {
+        openAddFormWithoutMerchant()
+
+        composeRule.onNodeWithText("Save").performClick()
+
+        waitForText("Enter a merchant")
+        assertThat(storedReceipts()).isEmpty()
     }
 }

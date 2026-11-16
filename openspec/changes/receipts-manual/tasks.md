@@ -2,26 +2,25 @@
 
 ## 1. Dependencies and Room convention plugin
 
-- [x] 1.1 Add catalog entries for Room (runtime, ktx if still separate, compiler, testing, Gradle plugin), `net.zetetic:sqlcipher-android`, `androidx.sqlite`, and the instrumented-test libraries `:data:receipts` needs (`androidx.test.ext:junit`, `androidx.test:runner`), choosing the newest stable versions compatible with AGP 9.3, Kotlin 2.2 and KSP 2.3. Verify with `./gradlew help` that the catalog resolves.
-- [x] 1.2 Implement the `pocketreceipts.android.room` convention plugin (D3: Room Gradle plugin, KSP, `schemaDirectory("$projectDir/schemas")`, runtime + compiler dependencies), register it in `convention.gradle.kts`, and apply it to `:data:receipts`. Verify `./gradlew :data:receipts:assembleDebug` passes, runs twice with the configuration cache reused, and `./gradlew check` (privacy + module-dependency checks) still passes with SQLCipher on the classpath.
+- [x] 1.1 Add catalog entries for Room (runtime, ktx if still separate, compiler, testing, Gradle plugin), and the instrumented-test libraries `:data:receipts` needs (`androidx.test.ext:junit`, `androidx.test:runner`), choosing the newest stable versions compatible with AGP 9.3, Kotlin 2.2 and KSP 2.3. Verify with `./gradlew help` that the catalog resolves.
+- [x] 1.2 Implement the `pocketreceipts.android.room` convention plugin (D3: Room Gradle plugin, KSP, `schemaDirectory("$projectDir/schemas")`, runtime + compiler dependencies), register it in `convention.gradle.kts`, and apply it to `:data:receipts`. Verify `./gradlew :data:receipts:assembleDebug` passes, runs twice with the configuration cache reused, and `./gradlew check` (privacy + module-dependency checks) still passes.
 
 ## 2. Domain model and use cases (`:domain`)
 
 - [x] 2.1 Add `Money`, `ReceiptCategory` (nine values in spec order), `Receipt`, `ReceiptInput` and the `ReceiptRepository` interface (D1), with KDoc. Verify `./gradlew :domain:build` passes.
 - [x] 2.2 TDD `ReceiptValidator`: blank merchant, merchant over 100 characters after trimming, total ≤ 0, future date (against a fixed `Clock`), note over 500 characters, and several errors at once. Verify `./gradlew :domain:test` passes.
-- [x] 2.3 TDD (usecase skill) `MonitorReceiptsUseCase`, `MonitorReceiptUseCase`, `DeleteReceiptUseCase`, `GetDefaultCurrencyUseCase` (en-GB → GBP, de-DE → EUR, a locale with no region → EUR) and `SaveReceiptUseCase`: it trims merchant and note, maps a blank note to null, returns `Invalid` without calling the repository, and adds when `id` is null or updates otherwise. Verify `./gradlew :domain:test` passes.
+- [x] 2.3 TDD (usecase skill) `MonitorReceiptsUseCase`, `MonitorReceiptUseCase`, `DeleteReceiptUseCase`, `GetDefaultCurrencyUseCase` (en-GB → GBP, de-DE → EUR, a locale with no region → INR) and `SaveReceiptUseCase`: it trims merchant and note, maps a blank note to null, returns `Invalid` without calling the repository, and adds when `id` is null or updates otherwise. Verify `./gradlew :domain:test` passes.
 
-## 3. Encrypted storage and repository (`:data:receipts`)
+## 3. Storage and repository (`:data:receipts`)
 
 - [x] 3.1 TDD (mapper skill) `ReceiptCategoryMapper` (stable keys both ways, unknown key → `OTHER`) and `ReceiptEntityMapper` (epoch-day dates, minor units, nullable note). Verify `./gradlew :data:receipts:testDebugUnitTest` passes.
 - [x] 3.2 Add `ReceiptEntity`, `ReceiptDao` (`observeAll` ordered by `purchase_date DESC, created_at DESC`, `observeById`, `insert`, `update`, `deleteById`) and `ReceiptsDatabase` v1 with the `(purchase_date, created_at)` index (D4). Write instrumented DAO tests on an in-memory database: ordering with same-date ties, update, delete, and `observeById` emitting `null` after delete. Verify `./gradlew :data:receipts:connectedDebugAndroidTest` passes and `data/receipts/schemas/.../1.json` is generated and committed.
-- [x] 3.3 Implement `DatabasePassphraseProvider` with the Keystore implementation (D5: 32 random bytes, AES-256-GCM wrapping key with no user auth, IV + ciphertext in `noBackupFilesDir/receipts_db.key`). Write an instrumented test that a second provider instance returns the same passphrase and the key file doesn't contain it in plain form. Verify the test passes on a device.
-- [x] 3.4 Implement `ReceiptsDatabaseProvider` (SQLCipher `SupportOpenHelperFactory`, `loadLibrary`, build once on `@IoDispatcher` behind a `Mutex`). Write an instrumented test: after writing a receipt, the database file doesn't start with `SQLite format 3` and opening it with a different passphrase fails. Verify the test passes on a device.
-- [x] 3.5 TDD `DefaultReceiptRepository` with a mocked DAO, a mocked provider and a fixed `Clock`: it maps rows, sets `created_at`/`updated_at` on add and only `updated_at` on update, and an open failure reaches the flow as an error. Add the `internal` `ReceiptsDataModule` bindings (D7) and `TimeModule` (`Clock.systemDefaultZone()`) in `:app`. Verify `./gradlew :data:receipts:testDebugUnitTest :app:assembleDebug` passes (the Hilt graph compiles).
+- [x] 3.3 Provide `ReceiptsDatabase` (plain Room, no encryption; D5) as a Hilt singleton and `ReceiptDao` from it. Verify `./gradlew :app:assembleDebug` passes (the Hilt graph compiles).
+- [x] 3.4 TDD `DefaultReceiptRepository` with a mocked DAO and a fixed `Clock`: it maps rows, sets `created_at`/`updated_at` on add and only `updated_at` on update. Add the `internal` `ReceiptsDataModule` bindings (D7) and `TimeModule` (`Clock.systemDefaultZone()`) in `:app`. Verify `./gradlew :data:receipts:testDebugUnitTest :app:assembleDebug` passes (the Hilt graph compiles).
 
 ## 4. Backup exclusion (`:app`)
 
-- [x] 4.1 Exclude the `database` domain in `backup_rules.xml` and in both `<cloud-backup>` and `<device-transfer>` of `data_extraction_rules.xml` (D6), replacing the template comments. Verify `./gradlew :app:lint` reports no backup-rule issues. Then on an emulator: add a receipt, run `adb shell bmgr backupnow com.bhavnathacker.pocketreceipts` with the local transport, and confirm the backup has no `databases/` entry and no `receipts_db.key`. Record the result in the change notes.
+- [x] 4.1 Exclude the `database` domain in `backup_rules.xml` and in both `<cloud-backup>` and `<device-transfer>` of `data_extraction_rules.xml` (D6), replacing the template comments. Verify `./gradlew :app:lint` reports no backup-rule issues. Then on an emulator: add a receipt, run `adb shell bmgr backupnow com.bhavnathacker.pocketreceipts` with the local transport, and confirm the backup has no `databases/` entry. Record the result in the change notes.
 
 ## 5. Receipts presentation (`:feature:receipts`)
 
@@ -34,12 +33,12 @@
 
 ## 6. Documentation
 
-- [x] 6.1 Update `README.md` (remove "starter app scaffold", list the Receipts feature, add encryption at rest and backup exclusion to "Privacy guarantees") and `.claude/CLAUDE.md` (the `pocketreceipts.android.room` convention, and that Room schemas are exported to `data/receipts/schemas`). Verify the documented commands and plugin ids match the build.
+- [x] 6.1 Update `README.md` (remove "starter app scaffold", list the Receipts feature, add backup exclusion to "Privacy guarantees") and `.claude/CLAUDE.md` (the `pocketreceipts.android.room` convention, and that Room schemas are exported to `data/receipts/schemas`). Verify the documented commands and plugin ids match the build.
 
 ## 7. Integration check
 
-- [x] 7.1 Add `:app` instrumented tests: Receipts stays selected on the detail screen; detail → select Ask → back shows the list; add → list → edit → delete end to end against the real encrypted database; the edit form survives rotation (a real `MainActivity` recreation via `scenario.recreate()`, which retains ViewModels the way rotation does. `StateRestorationTester` doesn't, because Navigation 3 clears entry ViewModels when the composition is disposed outside a configuration change). Verify `./gradlew :app:connectedDebugAndroidTest` passes.
-- [x] 7.2 From a clean build, run `./gradlew clean check assembleDebug` (all privacy checks green) and every module's `connectedDebugAndroidTest` on a device. Then check manually: a receipt survives a force-stop, a rotation mid-edit keeps the input, and with an en-GB locale a new receipt defaults to GBP. Record the results in the change notes.
+- [x] 7.1 Add `:app` instrumented tests: Receipts stays selected on the detail screen; detail → select Ask → back shows the list; adding, editing and deleting a receipt, one test each, against the real database; the edit form survives rotation (a real `MainActivity` recreation via `scenario.recreate()`, which retains ViewModels the way rotation does. `StateRestorationTester` doesn't, because Navigation 3 clears entry ViewModels when the composition is disposed outside a configuration change). Verify `./gradlew :app:connectedDebugAndroidTest` passes.
+- [x] 7.2 From a clean build, run `./gradlew clean check assembleDebug` (all privacy checks green) and every module's `connectedDebugAndroidTest` on a device. Then check manually: a receipt survives a force-stop, a rotation mid-edit keeps the input, and with an en-GB locale a new receipt defaults to GBP. A locale without a region falls back to INR. Record the results in the change notes.
 
 ## Workflow follow-up
 

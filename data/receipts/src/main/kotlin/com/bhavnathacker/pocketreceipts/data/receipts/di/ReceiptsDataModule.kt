@@ -1,11 +1,10 @@
 package com.bhavnathacker.pocketreceipts.data.receipts.di
 
 import android.content.Context
-import com.bhavnathacker.pocketreceipts.data.receipts.database.ReceiptsDatabaseProvider
+import androidx.room.Room
+import com.bhavnathacker.pocketreceipts.data.receipts.database.ReceiptDao
+import com.bhavnathacker.pocketreceipts.data.receipts.database.ReceiptsDatabase
 import com.bhavnathacker.pocketreceipts.data.receipts.repository.DefaultReceiptRepository
-import com.bhavnathacker.pocketreceipts.data.receipts.security.DatabasePassphraseProvider
-import com.bhavnathacker.pocketreceipts.data.receipts.security.KeystoreDatabasePassphraseProvider
-import com.bhavnathacker.pocketreceipts.domain.dispatcher.IoDispatcher
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptRepository
 import dagger.Binds
 import dagger.Module
@@ -13,8 +12,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineDispatcher
-import java.io.File
 import javax.inject.Singleton
 
 @Module
@@ -26,27 +23,13 @@ internal abstract class ReceiptsDataModule {
 
     companion object {
 
+        /** Room opens the file on the first query, which runs off the main thread. */
         @Provides
         @Singleton
-        fun provideDatabasePassphraseProvider(
-            @ApplicationContext context: Context,
-        ): DatabasePassphraseProvider =
-            KeystoreDatabasePassphraseProvider(
-                keyFile = { File(context.noBackupFilesDir, KeystoreDatabasePassphraseProvider.KEY_FILE_NAME) },
-                keyAlias = KeystoreDatabasePassphraseProvider.KEY_ALIAS,
-            )
+        fun provideReceiptsDatabase(@ApplicationContext context: Context): ReceiptsDatabase =
+            Room.databaseBuilder(context, ReceiptsDatabase::class.java, ReceiptsDatabase.NAME).build()
 
         @Provides
-        @Singleton
-        fun provideReceiptsDatabaseProvider(
-            @ApplicationContext context: Context,
-            passphraseProvider: DatabasePassphraseProvider,
-            @IoDispatcher ioDispatcher: CoroutineDispatcher,
-        ): ReceiptsDatabaseProvider =
-            ReceiptsDatabaseProvider(
-                context = context,
-                passphraseProvider = passphraseProvider,
-                ioDispatcher = ioDispatcher,
-            )
+        fun provideReceiptDao(database: ReceiptsDatabase): ReceiptDao = database.receiptDao()
     }
 }

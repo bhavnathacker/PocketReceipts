@@ -3,10 +3,8 @@
     Backup and transfer rules for Android 12 (API 31) and higher.
     See https://developer.android.com/about/versions/12/backup-restore#xml-changes
 
-    The receipts database is encrypted with a key that is bound to this device's
-    Keystore, so it is excluded from both cloud backup and device-to-device
-    transfer: a copy could not be opened anywhere else. Its wrapped key lives in
-    noBackupFilesDir, which is never backed up or transferred.
+    Receipt data never leaves the phone, so the receipts database is excluded
+    from both cloud backup and device-to-device transfer.
 -->
 <data-extraction-rules>
     <cloud-backup>

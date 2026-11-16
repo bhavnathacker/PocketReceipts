@@ -22,8 +22,6 @@ androidxHilt = "1.4.0"
 javaxInject = "1"
 kover = "0.9.11"
 room = "2.8.5"
-sqlcipherAndroid = "4.20.0"
-androidxSqlite = "2.7.1"
 androidxTestRunner = "1.7.0"
 
 [libraries]
@@ -66,8 +64,6 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
-androidx-sqlite = { group = "androidx.sqlite", name = "sqlite", version.ref = "androidxSqlite" }
-sqlcipher-android = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "sqlcipherAndroid" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
 
 # Build-logic dependencies (convention plugins compile against these)

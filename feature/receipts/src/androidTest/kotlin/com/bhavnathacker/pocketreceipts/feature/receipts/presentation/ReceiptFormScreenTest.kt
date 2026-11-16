@@ -72,57 +72,101 @@ class ReceiptFormScreenTest {
     }
 
     @Test
-    fun test_that_a_new_receipt_form_shows_its_defaults() {
+    fun test_that_a_new_receipt_form_is_titled_add_receipt() {
         setScreen(emptyForm)
 
         composeRule.onNodeWithText("Add receipt").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_a_new_receipt_form_shows_the_currency() {
+        setScreen(emptyForm)
+
         composeRule.onNodeWithText("EUR").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_a_new_receipt_form_shows_the_purchase_date() {
+        setScreen(emptyForm)
+
         composeRule.onNodeWithText("Mar 3, 2026", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_a_new_receipt_form_shows_the_category() {
+        setScreen(emptyForm)
+
         composeRule.onNodeWithText("Other").assertIsDisplayed()
     }
 
     @Test
     fun test_that_the_edit_form_is_titled_edit_receipt() {
-        setScreen(emptyForm.copy(isEditing = true, merchant = "Corner Shop"))
+        setScreen(emptyForm.copy(isEditing = true))
 
         composeRule.onNodeWithText("Edit receipt").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_edit_form_shows_the_merchant() {
+        setScreen(emptyForm.copy(isEditing = true, merchant = "Corner Shop"))
+
         composeRule.onNodeWithText("Corner Shop").assertIsDisplayed()
     }
 
     @Test
-    fun test_that_typing_reports_merchant_and_amount() {
+    fun test_that_typing_a_merchant_reports_it() {
         setScreen(emptyForm)
 
         composeRule.onNode(hasText("Merchant") and hasSetTextAction()).performTextInput("Corner Shop")
-        composeRule.onNode(hasText("Total") and hasSetTextAction()).performTextInput("4.50")
 
         assertThat(merchant).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun test_that_typing_an_amount_reports_it() {
+        setScreen(emptyForm)
+
+        composeRule.onNode(hasText("Total") and hasSetTextAction()).performTextInput("4.50")
+
         assertThat(amount).isEqualTo("4.50")
     }
 
     @Test
-    fun test_that_save_and_close_report_their_actions() {
+    fun test_that_save_reports_the_save_action() {
         setScreen(emptyForm)
 
         composeRule.onNodeWithText("Save").performClick()
-        composeRule.onNodeWithContentDescription("Close").performClick()
 
         assertThat(saves).isEqualTo(1)
+    }
+
+    @Test
+    fun test_that_close_reports_the_close_action() {
+        setScreen(emptyForm)
+
+        composeRule.onNodeWithContentDescription("Close").performClick()
+
         assertThat(closes).isEqualTo(1)
     }
 
     @Test
-    fun test_that_field_errors_are_shown() {
-        setScreen(
-            emptyForm.copy(
-                merchantError = R.string.receipt_form_error_merchant_blank,
-                amountError = R.string.receipt_form_error_amount_invalid,
-                noteError = R.string.receipt_form_error_note_too_long,
-            ),
-        )
+    fun test_that_the_merchant_error_is_shown() {
+        setScreen(emptyForm.copy(merchantError = R.string.receipt_form_error_merchant_blank))
 
         composeRule.onNodeWithText("Enter a merchant").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_amount_error_is_shown() {
+        setScreen(emptyForm.copy(amountError = R.string.receipt_form_error_amount_invalid))
+
         composeRule.onNodeWithText("Enter a valid amount").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_note_error_is_shown() {
+        setScreen(emptyForm.copy(noteError = R.string.receipt_form_error_note_too_long))
+
         composeRule.onNodeWithText("Use 500 characters or fewer").assertExists()
     }
 
@@ -144,10 +188,10 @@ class ReceiptFormScreenTest {
     }
 
     @Test
-    fun test_that_the_currency_picker_lists_and_filters_currencies() {
+    fun test_that_searching_currencies_shows_matching_currencies() {
         setScreen(emptyForm)
-
         composeRule.onNodeWithText("EUR").performClick()
+
         composeRule.onNode(hasText("Search currencies") and hasSetTextAction()).performTextInput("rupee")
 
         composeRule.onNodeWithText("INR", substring = true).assertIsDisplayed()

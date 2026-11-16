@@ -44,7 +44,16 @@ class SaveReceiptUseCaseTest {
     }
 
     @Test
-    fun `test that invoke adds the receipt and returns its id when id is null`() = runTest {
+    fun `test that invoke adds the receipt when id is null`() = runTest {
+        whenever(receiptRepository.addReceipt(input)).thenReturn(42)
+
+        underTest(id = null, input = input)
+
+        verify(receiptRepository).addReceipt(input)
+    }
+
+    @Test
+    fun `test that invoke returns the new id when id is null`() = runTest {
         whenever(receiptRepository.addReceipt(input)).thenReturn(42)
 
         val result = underTest(id = null, input = input)
@@ -53,21 +62,36 @@ class SaveReceiptUseCaseTest {
     }
 
     @Test
-    fun `test that invoke updates the receipt and returns its id when id is given`() = runTest {
-        val result = underTest(id = 7, input = input)
+    fun `test that invoke updates the receipt when id is given`() = runTest {
+        underTest(id = 7, input = input)
 
         verify(receiptRepository).updateReceipt(7, input)
+    }
+
+    @Test
+    fun `test that invoke returns the given id when id is given`() = runTest {
+        val result = underTest(id = 7, input = input)
+
         assertThat(result).isEqualTo(SaveReceiptResult.Saved(7))
     }
 
     @Test
-    fun `test that invoke trims merchant and note before validating and saving`() = runTest {
+    fun `test that invoke validates the trimmed merchant and note`() = runTest {
         val trimmed = input.copy(merchant = "Corner Shop", note = "milk")
         whenever(receiptRepository.addReceipt(trimmed)).thenReturn(1)
 
         underTest(id = null, input = input.copy(merchant = "  Corner Shop  ", note = "  milk "))
 
         verify(receiptValidator).invoke(trimmed)
+    }
+
+    @Test
+    fun `test that invoke saves the trimmed merchant and note`() = runTest {
+        val trimmed = input.copy(merchant = "Corner Shop", note = "milk")
+        whenever(receiptRepository.addReceipt(trimmed)).thenReturn(1)
+
+        underTest(id = null, input = input.copy(merchant = "  Corner Shop  ", note = "  milk "))
+
         verify(receiptRepository).addReceipt(trimmed)
     }
 
@@ -82,13 +106,21 @@ class SaveReceiptUseCaseTest {
     }
 
     @Test
-    fun `test that invoke returns Invalid without saving when validation fails`() = runTest {
+    fun `test that invoke returns Invalid with the errors when validation fails`() = runTest {
         val errors = setOf(ReceiptFieldError.MerchantBlank, ReceiptFieldError.TotalNotPositive)
         whenever(receiptValidator(any())).thenReturn(errors)
 
         val result = underTest(id = 7, input = input)
 
         assertThat(result).isEqualTo(SaveReceiptResult.Invalid(errors))
+    }
+
+    @Test
+    fun `test that invoke does not save when validation fails`() = runTest {
+        whenever(receiptValidator(any())).thenReturn(setOf(ReceiptFieldError.MerchantBlank))
+
+        underTest(id = 7, input = input)
+
         verifyNoInteractions(receiptRepository)
     }
 }

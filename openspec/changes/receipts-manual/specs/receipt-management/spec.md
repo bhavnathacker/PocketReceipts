@@ -39,6 +39,10 @@ Each receipt SHALL carry its own currency. New receipts SHALL default to the cur
 - **WHEN** the device locale is en-GB and the user starts a new receipt
 - **THEN** the currency is preset to GBP
 
+#### Scenario: Fallback currency
+- **WHEN** the device locale has no region, or its region has no currency, and the user starts a new receipt
+- **THEN** the currency is preset to INR
+
 #### Scenario: Different currency
 - **WHEN** the user changes the currency of a new receipt to USD and saves it
 - **THEN** the receipt shows its total in USD, while other receipts keep their own currencies

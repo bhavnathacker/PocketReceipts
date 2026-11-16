@@ -3,9 +3,8 @@
     Auto Backup rules for Android 11 (API 30) and lower.
     See https://developer.android.com/identity/data/autobackup
 
-    The receipts database is encrypted with a key that is bound to this device's
-    Keystore, so it must never be backed up or restored: a restored copy could not
-    be opened. Its wrapped key lives in noBackupFilesDir, which is never backed up.
+    Receipt data never leaves the phone, so the receipts database is never
+    backed up.
 -->
 <full-backup-content>
     <exclude domain="database" path="." />

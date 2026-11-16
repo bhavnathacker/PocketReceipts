@@ -53,7 +53,7 @@ class ReceiptDaoTest {
     }
 
     @Test
-    fun test_that_insert_assigns_ids_and_stores_all_fields() = runTest {
+    fun test_that_insert_stores_all_fields_under_the_returned_id() = runTest {
         val id = underTest.insert(entity(merchant = "Corner Shop", note = "milk"))
 
         val stored = underTest.observeById(id).first()

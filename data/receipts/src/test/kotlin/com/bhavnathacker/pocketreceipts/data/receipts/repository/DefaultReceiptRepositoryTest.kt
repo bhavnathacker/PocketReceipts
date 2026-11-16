@@ -3,8 +3,6 @@ package com.bhavnathacker.pocketreceipts.data.receipts.repository
 import app.cash.turbine.test
 import com.bhavnathacker.pocketreceipts.data.receipts.database.ReceiptDao
 import com.bhavnathacker.pocketreceipts.data.receipts.database.ReceiptEntity
-import com.bhavnathacker.pocketreceipts.data.receipts.database.ReceiptsDatabase
-import com.bhavnathacker.pocketreceipts.data.receipts.database.ReceiptsDatabaseProvider
 import com.bhavnathacker.pocketreceipts.data.receipts.mapper.ReceiptEntityMapper
 import com.bhavnathacker.pocketreceipts.domain.receipt.Money
 import com.bhavnathacker.pocketreceipts.domain.receipt.Receipt
@@ -16,7 +14,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
-import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
@@ -30,8 +27,6 @@ class DefaultReceiptRepositoryTest {
     private lateinit var underTest: DefaultReceiptRepository
 
     private val receiptDao = mock<ReceiptDao>()
-    private val database = mock<ReceiptsDatabase> { on { receiptDao() } doReturn receiptDao }
-    private val databaseProvider = mock<ReceiptsDatabaseProvider>()
     private val receiptEntityMapper = mock<ReceiptEntityMapper>()
 
     private val now = Instant.parse("2026-03-03T10:00:00Z")
@@ -55,10 +50,9 @@ class DefaultReceiptRepositoryTest {
     )
 
     @BeforeEach
-    fun setUp() = runTest {
-        whenever(databaseProvider.get()).thenReturn(database)
+    fun setUp() {
         underTest = DefaultReceiptRepository(
-            databaseProvider = databaseProvider,
+            receiptDao = receiptDao,
             receiptEntityMapper = receiptEntityMapper,
             clock = clock,
         )
@@ -73,15 +67,6 @@ class DefaultReceiptRepositoryTest {
         underTest.monitorReceipts().test {
             assertThat(awaitItem()).containsExactly(receipt)
             awaitComplete()
-        }
-    }
-
-    @Test
-    fun `test that monitorReceipts emits an error when the database cannot be opened`() = runTest {
-        whenever(databaseProvider.get()).thenThrow(IllegalStateException("bad key"))
-
-        underTest.monitorReceipts().test {
-            assertThat(awaitError()).isInstanceOf(IllegalStateException::class.java)
         }
     }
 
@@ -107,7 +92,16 @@ class DefaultReceiptRepositoryTest {
     }
 
     @Test
-    fun `test that addReceipt inserts a row with created and updated set to now and returns its id`() = runTest {
+    fun `test that addReceipt inserts a row with created and updated set to now`() = runTest {
+        whenever(receiptEntityMapper(input, 0, now.toEpochMilli(), now.toEpochMilli())).thenReturn(entity)
+
+        underTest.addReceipt(input)
+
+        verify(receiptDao).insert(entity)
+    }
+
+    @Test
+    fun `test that addReceipt returns the id of the inserted row`() = runTest {
         whenever(receiptEntityMapper(input, 0, now.toEpochMilli(), now.toEpochMilli())).thenReturn(entity)
         whenever(receiptDao.insert(entity)).thenReturn(42)
 

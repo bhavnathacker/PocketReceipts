@@ -1,5 +1,7 @@
 # Notes
 
+> The 2026-11-04 checks below ran against the SQLCipher build. Encryption was removed in the revision on 2026-11-16 (see the last section), so rows about the key file and the encrypted header no longer apply.
+
 ## Task 4.1: backup exclusion check (2026-11-04)
 
 Emulator `Pixel_10` (API 37, Google Play image, so no `adb root`), debug build, local transport (`com.android.localtransport/.LocalTransport`).
@@ -42,3 +44,21 @@ Known issue, not caused by this change: `:data:ai` and `:data:model-download` ha
 | App locale en-GB (`cmd locale set-app-locales`), open the add form | Pass: currency preset to GBP, date shown as `4 Nov 2026`. The existing USD receipt shows as `US$12.30`. |
 | Database file on disk after adding receipts | Pass: random 16-byte header (no `SQLite format 3`), merchant text not found in `receipts.db*`, and `no_backup/receipts_db.key` present. |
 | Icons (task 5.1) | Pass: add, close, calendar, back, edit and delete render correctly in the list, form and detail screens. |
+
+## Revision after owner review (2026-11-16)
+
+Owner review asked for three changes:
+
+1. **Fallback currency is INR** (was EUR) when the locale has no region or its region has no currency.
+2. **No encryption**: SQLCipher, the Keystore passphrase provider, `ReceiptsDatabaseProvider` and their tests are removed, along with the `sqlcipher-android` and `androidx.sqlite` catalog entries. `ReceiptsDatabase` is a plain Room singleton, and the repository uses `ReceiptDao` directly. The backup and transfer exclusion stays, because receipt data must not leave the phone.
+3. **One behavior per test**: tests that checked several behaviors were split, for example the add/edit/delete flow became separate add, edit and delete tests.
+
+**Build**: `./gradlew check assembleDebug` passes, including the privacy checks. JVM tests: 189, 0 failures.
+
+**Instrumented tests** (Pixel_10, API 37): 67 tests, 0 failures.
+
+| Module | Suites | Tests |
+|---|---|---|
+| `:app` | `PocketReceiptsAppTest`, `ReceiptsFlowTest`, `ReceiptsConfigurationChangeTest` | 21 |
+| `:data:receipts` | `ReceiptDaoTest` | 7 |
+| `:feature:receipts` | `ReceiptListScreenTest`, `ReceiptFormScreenTest`, `ReceiptDetailScreenTest`, `MoneyFormatterTest` | 39 |

@@ -35,25 +35,44 @@ class ReceiptListScreenTest {
         }
     }
 
+    private val cornerShop = ReceiptListUiState.Receipts(
+        listOf(ReceiptListItemUiModel(7, "Corner Shop", "3 Mar 2026", "₹1,23,456.50", R.string.category_groceries)),
+    )
+
     @Test
-    fun test_that_the_empty_state_shows_a_message_and_the_add_action() {
+    fun test_that_the_empty_state_shows_a_message() {
         setScreen(ReceiptListUiState.Empty)
 
         composeRule.onNodeWithText("No receipts yet").assertIsDisplayed()
-        composeRule.onNodeWithText("Add receipt").assertIsDisplayed().performClick()
+    }
+
+    @Test
+    fun test_that_the_add_action_reports_the_click() {
+        setScreen(ReceiptListUiState.Empty)
+
+        composeRule.onNodeWithText("Add receipt").performClick()
+
         assertThat(addClicks).isEqualTo(1)
     }
 
     @Test
-    fun test_that_a_row_shows_merchant_date_category_and_total() {
-        setScreen(
-            ReceiptListUiState.Receipts(
-                listOf(ReceiptListItemUiModel(7, "Corner Shop", "3 Mar 2026", "₹1,23,456.50", R.string.category_groceries)),
-            ),
-        )
+    fun test_that_a_row_shows_the_merchant() {
+        setScreen(cornerShop)
 
         composeRule.onNodeWithText("Corner Shop").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_a_row_shows_the_date_and_category() {
+        setScreen(cornerShop)
+
         composeRule.onNodeWithText("3 Mar 2026 · Groceries").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_a_row_shows_the_total() {
+        setScreen(cornerShop)
+
         composeRule.onNodeWithText("₹1,23,456.50").assertIsDisplayed()
     }
 

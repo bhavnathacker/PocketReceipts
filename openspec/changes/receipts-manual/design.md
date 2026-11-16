@@ -10,18 +10,18 @@ Current state (after `foundation`):
 - `:feature:receipts` exposes `ReceiptsKey` and `receiptsEntries()`, which shows a `PlaceholderScreen`.
 - `:app` owns the single back stack (`rememberNavBackStack(ReceiptsKey)`), `TopLevelNavigator` and `NavDisplay`, which already has the saveable-state and ViewModel-store entry decorators. `DispatcherModule` lives in `:app`.
 - `backup_rules.xml` and `data_extraction_rules.xml` are still the template files with nothing excluded.
-- Room, SQLCipher and a date/time abstraction don't exist yet. minSdk is 26, so `java.time` is available without desugaring.
+- Room and a date/time abstraction don't exist yet. minSdk is 26, so `java.time` is available without desugaring.
 
 ## Goals / Non-Goals
 
 **Goals:**
 - A receipt model and repository API that capture/AI extraction (saving a reviewed draft) and Ask (querying by date range, category and currency) can use without changing them.
-- Encryption at rest from the first row, so there is never a plaintext database to migrate.
-- No disk, Keystore or native-library work on the main thread.
+- Receipt data never leaves the phone: no backup or device transfer of the database.
+- No disk work on the main thread.
 
 **Non-Goals:**
 - Unsaved form input surviving process death (configuration changes only, per spec). Saving drafts belongs with capture.
-- Recovering from a lost Keystore key, or exporting and importing data.
+- Encryption at rest (see D5), or exporting and importing data.
 - Search, filters, paging. The list loads all receipts. Paging comes later, if volume calls for it.
 - Room migrations (schema v1 only; exporting the schema now makes later migrations testable).
 
@@ -39,7 +39,7 @@ Current state (after `foundation`):
 - Use cases (one each, per conventions): `MonitorReceiptsUseCase`, `MonitorReceiptUseCase`, `SaveReceiptUseCase(id: Long?, input)`, `DeleteReceiptUseCase`, `GetDefaultCurrencyUseCase`.
 - `SaveReceiptUseCase` trims the input, validates it with `ReceiptValidator`, and returns `SaveReceiptResult.Saved(id)` or `SaveReceiptResult.Invalid(errors: Set<ReceiptFieldError>)`. Validation lives in the domain so the later capture review form gets the same rules for free.
 - "Today" comes from an injected `java.time.Clock`, provided by a `TimeModule` in `:app` (system default zone). Tests pass a fixed clock.
-- `GetDefaultCurrencyUseCase` returns `Currency.getInstance(Locale.getDefault())`, or EUR when the locale has no region or currency. These are plain JVM APIs, so the domain stays Android-free.
+- `GetDefaultCurrencyUseCase` returns `Currency.getInstance(Locale.getDefault())`, or INR when the locale has no region or currency. These are plain JVM APIs, so the domain stays Android-free.
 
 *Alternative:* `BigDecimal` in the model. It's exact too, but it's awkward in Room and in SQL sums for Ask. Minor units in a `Long` sum directly in SQL.
 
@@ -71,22 +71,19 @@ Table `receipts`:
 - Index on `(purchase_date, created_at)`.
 - The entity uses primitives only, so there are no Room `TypeConverter`s. `ReceiptEntityMapper` and `ReceiptCategoryMapper` (data layer) convert to and from the domain. An unknown category key maps to `OTHER` and is logged, never a crash.
 
-### D5. SQLCipher and key handling
-- `net.zetetic:sqlcipher-android` (16 KB page-size aligned), with `SupportOpenHelperFactory(passphrase)` passed to `Room.databaseBuilder(...).openHelperFactory(...)`. `System.loadLibrary("sqlcipher")` runs before the first open.
-- **Passphrase**: 32 bytes from `SecureRandom`, generated on first open. It's wrapped with an AES-256-GCM key in `AndroidKeyStore` (alias `receipts_db_key_wrapper`, no user authentication, so the app opens without prompts as the spec requires; StrongBox used if available, not required). The IV and ciphertext are stored in `noBackupFilesDir/receipts_db.key`. The passphrase stays a `ByteArray`, is never a `String`, and is never logged.
-- All of this sits in `DatabasePassphraseProvider` (interface + Keystore implementation). It's tested on a device, and tests of other classes use a fake.
-- **Off the main thread**: `ReceiptsDatabaseProvider` exposes `suspend fun get(): ReceiptsDatabase`. On first call it builds the database on `@IoDispatcher` behind a `Mutex` and caches it. The repository wraps DAO flows as `flow { emitAll(provider.get().receiptDao().observeAll()) }`. Hilt injection therefore never touches disk or the Keystore.
-- **Failure** (Keystore key missing, unwrap or open fails): the error goes into the flow. The list ViewModel catches it, logs it (Timber, no data), and shows an error state ("Your receipts couldn't be opened"). The database is never deleted automatically, because that would silently lose data. Recovery is left for later (see Non-Goals).
+### D5. No encryption at rest
+- The database is a plain Room database: `Room.databaseBuilder(context, ReceiptsDatabase::class.java, "receipts.db")`, provided as a Hilt singleton. Building it doesn't touch disk; Room opens the file on the first query, and every DAO method is `suspend` or returns a `Flow`, so that happens off the main thread.
+- The repository uses the DAO directly. If a query fails, the error reaches the caller through the flow or suspend call; the list ViewModel shows the error state ("Your receipts couldn't be opened").
+- Encryption (SQLCipher with a Keystore-wrapped passphrase) was implemented first and then removed at the owner's request to keep the implementation simple. The data stays on the device (D6) and inside the app sandbox.
 
-*Alternatives:* Jetpack `security-crypto` / `EncryptedSharedPreferences` is deprecated. Using a Keystore key directly as the passphrase isn't possible, because Keystore keys can't be exported. Encrypting individual columns would keep metadata and indexes in plaintext and complicate the queries Ask needs.
+*Trade-off:* a database file copied off a rooted or compromised device is readable. Adding encryption later means migrating the existing plaintext file, for example with SQLCipher's `sqlcipher_export`.
 
 ### D6. Backup exclusion
-- `backup_rules.xml` (API ≤ 30) and both `<cloud-backup>` and `<device-transfer>` in `data_extraction_rules.xml` (API 31+) exclude the `database` domain. The key file is in `noBackupFilesDir`, which is never backed up.
-- Excluding the database without the key would also be required for correctness: a restored database without its device-bound key could never be opened.
+- `backup_rules.xml` (API ≤ 30) and both `<cloud-backup>` and `<device-transfer>` in `data_extraction_rules.xml` (API 31+) exclude the `database` domain, so receipt data never leaves the phone through backup or transfer.
 - release-readiness may tighten backup further, for example with `allowBackup="false"`. This change covers only the receipt data.
 
 ### D7. Hilt wiring
-- `:data:receipts` has an `internal` `ReceiptsDataModule` (`@InstallIn(SingletonComponent::class)`) that binds `DefaultReceiptRepository` to `ReceiptRepository` and `KeystoreDatabasePassphraseProvider`, and provides `ReceiptsDatabaseProvider` as a singleton.
+- `:data:receipts` has an `internal` `ReceiptsDataModule` (`@InstallIn(SingletonComponent::class)`) that binds `DefaultReceiptRepository` to `ReceiptRepository`, provides `ReceiptsDatabase` as a singleton and `ReceiptDao` from it.
 - `:app` picks the module up through its existing dependency on `:data:receipts`, so it stays the composition root without new code apart from `TimeModule`.
 
 ### D8. Navigation (spec: app-navigation)
@@ -111,16 +108,15 @@ Per the ViewModel conventions (`internal`, a `MutableStateFlow` exposed as `Stat
   - the three ViewModels
   - new `TopLevelNavigator` cases for nested keys
 - **Instrumented (JUnit 4)**:
-  - **`:data:receipts`**: DAO tests on an in-memory Room database (ordering with ties, update, delete, `observeById` emits `null` after delete), a SQLCipher test (an encrypted file on disk doesn't start with the `SQLite format 3` header and can't be opened with a wrong passphrase), and a Keystore passphrase round trip (the same passphrase is returned on second creation).
+  - **`:data:receipts`**: DAO tests on an in-memory Room database (ordering with ties, update, delete, `observeById` emits `null` after delete).
   - **`:feature:receipts`**: Compose tests for the empty state, the list, form validation errors, and the delete confirmation.
-  - **`:app`**: navigation tests (Receipts stays selected on detail; tab switch then back shows the list) and an end-to-end add → list → edit → delete flow against the real (encrypted) database.
+  - **`:app`**: navigation tests (Receipts stays selected on detail; tab switch then back shows the list) and add, edit and delete flows, one per test, against the real database.
 
 ## Risks / Trade-offs
 
-- [Room, SQLCipher and KSP with AGP 9 built-in Kotlin are a fresh combination] → The first task adds the dependencies and the convention plugin and builds an empty database before any feature work.
-- [Native libraries add a few MB per ABI] → Accepted for encryption at rest. ABI splits or App Bundle delivery come in release-readiness.
-- [A lost Keystore key, for example after some OEM factory-reset or OS-update bugs, makes existing receipts unreadable] → The app shows an error state and doesn't delete anything. Backups are excluded by design, so data loss here is final. Recovery UX is a follow-up change.
-- [Keystore operations are slow on some devices (100 ms+)] → They run once per process, on `@IoDispatcher`, never on the main thread (D5).
+- [Room and KSP with AGP 9 built-in Kotlin are a fresh combination] → The first task adds the dependencies and the convention plugin and builds an empty database before any feature work.
+- [The database is not encrypted, so a copy taken from a rooted device is readable] → Accepted to keep the implementation simple (D5). Android's sandbox and file-based encryption still protect it on a normal device.
+- [Backups are excluded, so uninstalling or losing the phone loses the receipts] → Accepted for the privacy promise. Export comes later.
 - [Loading the whole list doesn't scale to thousands of receipts] → Fine for MVP volumes. The DAO API can move to Paging later without changing the domain repository contract much.
 - [Locale-dependent amount parsing (`,` vs `.`)] → The parser takes the locale explicitly and is tested with en-US, de-DE, en-IN (lakh grouping) and ja-JP.
 
@@ -130,4 +126,4 @@ The database and screens are new, and nothing has been released, so there is no 
 
 ## Open Questions
 
-- Exact versions of Room, the Room Gradle plugin and `sqlcipher-android`: the newest stable releases compatible with AGP 9.3, Kotlin 2.2 and KSP 2.3 at implementation time. This doesn't affect the approach.
+- Exact versions of Room and the Room Gradle plugin: the newest stable releases compatible with AGP 9.3, Kotlin 2.2 and KSP 2.3 at implementation time. This doesn't affect the approach.
