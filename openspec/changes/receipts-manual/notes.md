@@ -47,18 +47,19 @@ Known issue, not caused by this change: `:data:ai` and `:data:model-download` ha
 
 ## Revision after owner review (2026-11-16)
 
-Owner review asked for three changes:
+Owner review asked for these changes:
 
 1. **Fallback currency is INR** (was EUR) when the locale has no region or its region has no currency.
 2. **No encryption**: SQLCipher, the Keystore passphrase provider, `ReceiptsDatabaseProvider` and their tests are removed, along with the `sqlcipher-android` and `androidx.sqlite` catalog entries. `ReceiptsDatabase` is a plain Room singleton, and the repository uses `ReceiptDao` directly. The backup and transfer exclusion stays, because receipt data must not leave the phone.
-3. **One behavior per test**: tests that checked several behaviors were split, for example the add/edit/delete flow became separate add, edit and delete tests.
+3. **One behavior per test**: tests that checked several behaviors were split, for example the add/edit/delete flow became separate add, edit and delete tests. This includes the navigation tests in `PocketReceiptsAppTest` from `foundation`.
+4. **Backup exclusion kept**: the owner left it to judgment. It stays because the privacy promise is that spending data never leaves the phone.
 
 **Build**: `./gradlew check assembleDebug` passes, including the privacy checks. JVM tests: 189, 0 failures.
 
-**Instrumented tests** (Pixel_10, API 37): 67 tests, 0 failures.
+**Instrumented tests** (Pixel_10, API 37): 76 tests, 0 failures.
 
 | Module | Suites | Tests |
 |---|---|---|
-| `:app` | `PocketReceiptsAppTest`, `ReceiptsFlowTest`, `ReceiptsConfigurationChangeTest` | 21 |
+| `:app` | `PocketReceiptsAppTest`, `ReceiptsFlowTest`, `ReceiptsConfigurationChangeTest` | 30 |
 | `:data:receipts` | `ReceiptDaoTest` | 7 |
 | `:feature:receipts` | `ReceiptListScreenTest`, `ReceiptFormScreenTest`, `ReceiptDetailScreenTest`, `MoneyFormatterTest` | 39 |
