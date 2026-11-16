@@ -52,7 +52,7 @@
 
 ## 6. App wiring (`:app`)
 
-- [ ] 6.1 Wire `receiptsEntries(onScanClick)` and `captureEntries` in `PocketReceiptsApp` (D7: the capture key is replaced by the review or form key, and close pops it). Add `:app` instrumented tests:
+- [x] 6.1 Wire `receiptsEntries(onScanClick)` and `captureEntries` in `PocketReceiptsApp` (D7: the capture key is replaced by the review or form key, and close pops it). Add `:app` instrumented tests:
   - Receipts stays selected on capture and review keys
   - back from review shows the list
   - saving from review adds the receipt
