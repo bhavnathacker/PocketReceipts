@@ -176,4 +176,14 @@ class AmountCandidateParserTest {
     fun `test that invoke reads a whole amount on a total line when the currency has no decimals`() {
         assertThat(underTest(listOf("TOTAL 1,500"), jaJp)).containsExactly(Money(1500, "JPY"))
     }
+
+    @Test
+    fun `test that invoke uses the default currency next to a three letter word that is not a currency`() {
+        assertThat(underTest(listOf("TAX 10.00"), enUs)).containsExactly(Money(1000, "USD"))
+    }
+
+    @Test
+    fun `test that invoke uses the default currency next to an English word that is a currency code`() {
+        assertThat(underTest(listOf("CUP 3.00"), enUs)).containsExactly(Money(300, "USD"))
+    }
 }

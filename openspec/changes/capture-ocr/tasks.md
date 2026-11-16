@@ -61,12 +61,12 @@
 
 ## 7. Documentation
 
-- [ ] 7.1 Update `README.md`: the scan feature, the Google Play services requirement for scanning, scanned images not being kept, and ML Kit usage logging being switched off under "Privacy guarantees" (with the new `verifyNoUsageLoggingBackend` row). Update `.claude/CLAUDE.md`: the `:data:ocr` module, the app-manifest removals that switch off `transport-backend-cct`, and "never remove them". Verify the documented module and plugin names match the build.
+- [x] 7.1 Update `README.md`: the scan feature, the Google Play services requirement for scanning, scanned images not being kept, and ML Kit usage logging being switched off under "Privacy guarantees" (with the new `verifyNoUsageLoggingBackend` row). Update `.claude/CLAUDE.md`: the `:data:ocr` module, the app-manifest removals that switch off `transport-backend-cct`, and "never remove them". Verify the documented module and plugin names match the build.
 
 ## 8. Verification
 
-- [ ] 8.1 From a clean build, run `./gradlew clean check assembleDebug` (all privacy checks green, merged manifest without INTERNET or an upload backend) and the connected tests of `:app`, `:data:receipts`, `:data:ocr`, `:feature:receipts` and `:feature:capture` on the emulator. Record the counts in the change notes.
-- [ ] 8.2 Manual checks on the emulator, recorded in the change notes:
+- [x] 8.1 From a clean build, run `./gradlew clean check assembleDebug` (all privacy checks green, merged manifest without INTERNET or an upload backend) and the connected tests of `:app`, `:data:receipts`, `:data:ocr`, `:feature:receipts` and `:feature:capture` on the emulator. Record the counts in the change notes.
+- [x] 8.2 Manual checks on the emulator, recorded in the change notes:
   - scan a printed or on-screen receipt with the camera, and import one from the gallery; the review is prefilled
   - switch the total via a chip and save; the receipt is listed
   - cancel the scanner; back from review

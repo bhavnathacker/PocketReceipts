@@ -88,7 +88,7 @@ class AmountCandidateParser @Inject constructor(
         "¥" -> "JPY"
         "$" -> DOLLAR
         in NOT_CURRENCY_WORDS -> null
-        else -> runCatching { Currency.getInstance(marker).currencyCode }.getOrNull()
+        else -> marker.takeIf { it in ISO_CURRENCY_CODES }
     }
 
     private fun dollarCurrency(defaultCurrency: String, locale: Locale): String =
@@ -108,6 +108,14 @@ class AmountCandidateParser @Inject constructor(
         private val GROUP_SEPARATOR = Regex("""[.,'  ]""")
         private val MARKER_BEFORE = Regex("""(₹|(?<!\p{L})R[Ss]\.?|€|£|¥|\$|(?<!\p{L})[A-Z]{3})$""")
         private val MARKER_AFTER = Regex("""^(₹|€|£|¥|\$|[A-Z]{3}(?!\p{L}))""")
+
+        /**
+         * Known ISO 4217 codes. Android's `Currency.getInstance` accepts any
+         * well-formed three-letter code (`TAX`), so a code is checked against this set.
+         */
+        private val ISO_CURRENCY_CODES: Set<String> by lazy {
+            Currency.getAvailableCurrencies().mapTo(HashSet()) { it.currencyCode }
+        }
 
         /** English words that are also ISO 4217 codes, so they aren't read as currencies. */
         private val NOT_CURRENCY_WORDS = setOf("ALL", "CUP", "TOP", "PEN", "MOP", "BOB", "SOS")

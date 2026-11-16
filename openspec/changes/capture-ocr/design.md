@@ -167,7 +167,7 @@ Receipts list ──"Scan receipt"──▶ CaptureKey (:feature:capture)
 - [The scanner may write results outside `cacheDir`, or keep its own copies] → Task 1.2 found results in `cacheDir/mlkit_docscan_ui_client/` and no other copies, so D4's rule stands.
 - [The scanner module isn't installed yet, or the device has no Play services] → `Unavailable` with manual entry. First use needs Play services to download the module (its network, not the app's).
 - [OCR on faded thermal paper is unreliable, and the heuristics will pick the wrong total or merchant sometimes] → Every value is shown for confirmation, alternatives are one tap away, and `ai-extraction` improves the selection later. Parser fixtures keep regressions visible.
-- [The bundled Latin model adds about 4 MB per ABI] → Accepted for offline OCR. ABI splits come in release-readiness.
+- [The bundled Latin model adds about 12 MB per ABI (measured; first estimated at 4 MB)] → Accepted for offline OCR. ABI splits or an App Bundle come in release-readiness.
 - [Large candidate lists in the nav key] → Keep at most 5 dates and 8 totals.
 - [Non-Latin receipts (Devanagari, CJK) read poorly] → Out of scope. Numbers and Latin labels still usually read.
 

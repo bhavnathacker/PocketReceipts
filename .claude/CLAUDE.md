@@ -19,7 +19,8 @@
 
 - **AGP 9** (`9.3.3`) with its built-in Kotlin support: there is no `org.jetbrains.kotlin.android` plugin, only `org.jetbrains.kotlin.plugin.compose`. Don't add the Kotlin Android plugin; use AGP 9 DSL and APIs.
 - Module build setup lives in convention plugins in the `build-logic` included build (`pocketreceipts.android.application`, `.android.library`, `.android.compose`, `.android.feature`, `.android.room`, `.jvm.library`, `.hilt`, `.privacy`). New modules apply a convention plugin instead of configuring AGP/Kotlin directly, and are added in `settings.gradle.kts` with `includeModule(":group:name")`, which sets the `<name>.gradle.kts` build file name.
-- Privacy is enforced by the build (`./gradlew check`): only `:data:model-download` may depend on an HTTP client or add the INTERNET permission, and no analytics/crash-reporting SDKs are allowed. See README "Privacy guarantees".
+- Privacy is enforced by the build (`./gradlew check`): only `:data:model-download` may depend on an HTTP client or add the INTERNET permission, no analytics/crash-reporting SDKs are allowed, and no usage-logging upload backend may be registered (`verifyNoUsageLoggingBackend`). See README "Privacy guarantees".
+- **ML Kit usage logging is switched off in `app/src/main/AndroidManifest.xml`**: ML Kit (`:feature:capture` document scanner, `:data:ocr` text recognition) needs the classes of `com.google.android.datatransport:transport-backend-cct`, so it can't be excluded (ML Kit crashes). Instead the app manifest removes its `backend:…CctBackendFactory` meta-data and the INTERNET permission. Never remove those entries. `:data:ocr`'s androidTest manifest does the same for its test APK.
 - All dependency and plugin versions live in the version catalog `gradle/libs.versions.toml`; reference them via `libs.*` aliases. Compose library versions come from the Compose BOM.
 - compileSdk/targetSdk 37, minSdk 26, Java 11 source/target. The Gradle daemon runs on JDK 25 (toolchain auto-provisioned via foojay, see `gradle/gradle-daemon-jvm.properties`).
 - Gradle configuration cache is enabled (`gradle.properties`), so build logic must be configuration-cache compatible.
@@ -54,6 +55,8 @@
   ├── src/main/kotlin/com/bhavnathacker/pocketreceipts/data/receipts/
   │   └── ...             # Repository implementations, data sources, Room, mappers
   └── receipts.gradle.kts
+  data/ocr/               # ML Kit text recognition and scan image deletion
+  └── ocr.gradle.kts
   ```
 
 ### Naming Conventions
