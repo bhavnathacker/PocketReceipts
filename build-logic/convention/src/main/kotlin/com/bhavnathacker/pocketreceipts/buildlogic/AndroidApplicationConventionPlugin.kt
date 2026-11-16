@@ -22,6 +22,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             }
             registerTrackingSdkVerification()
             registerInternetPermissionVerification()
+            registerUsageLoggingBackendVerification()
         }
     }
 }
