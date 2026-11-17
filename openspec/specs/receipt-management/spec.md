@@ -59,11 +59,11 @@ The Receipts destination SHALL list all receipts, newest purchase date first. Re
 - **THEN** the list reflects the change without a manual refresh
 
 ### Requirement: Empty receipt list
-When no receipts exist, the Receipts destination SHALL show an empty state that explains there are no receipts yet and offers a way to add one.
+When no receipts exist, the Receipts destination SHALL show an empty state that explains there are no receipts yet and offers ways to add one: scanning a receipt and adding one by hand.
 
 #### Scenario: First launch
 - **WHEN** the user opens Receipts and no receipts exist
-- **THEN** an empty-state message and an add action are shown instead of a list
+- **THEN** an empty-state message, a scan action and an add action are shown instead of a list
 
 ### Requirement: Receipt detail
 Selecting a receipt in the list SHALL open a detail screen showing all of its fields, with actions to edit and delete it.
