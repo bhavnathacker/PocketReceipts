@@ -119,4 +119,38 @@ class DateCandidateParserTest {
     fun `test that invoke ignores words that are not month names`() {
         assertThat(underTest(listOf("2 Milk 2026"), enIn)).isEmpty()
     }
+
+    @Test
+    fun `test that invoke reads a date glued to its label`() {
+        assertThat(underTest(listOf("Date:-12/11/2026", "Dt.13/11/26", "Date-14/11/2026"), enIn))
+            .containsExactly(LocalDate.of(2026, 11, 12), LocalDate.of(2026, 11, 13), LocalDate.of(2026, 11, 14))
+            .inOrder()
+    }
+
+    @Test
+    fun `test that invoke reads a date with spaces around the separators`() {
+        assertThat(underTest(listOf("Date : 12 / 11 / 2026"), enIn)).containsExactly(LocalDate.of(2026, 11, 12))
+    }
+
+    @Test
+    fun `test that invoke reads a date followed by a time after a comma or slash`() {
+        assertThat(underTest(listOf("12/11/2026,10:30", "13-11-2026/10:30"), enIn))
+            .containsExactly(LocalDate.of(2026, 11, 12), LocalDate.of(2026, 11, 13))
+            .inOrder()
+    }
+
+    @Test
+    fun `test that invoke reads a two digit year after an apostrophe`() {
+        assertThat(underTest(listOf("Date: 12 Nov' 26"), enIn)).containsExactly(LocalDate.of(2026, 11, 12))
+    }
+
+    @Test
+    fun `test that invoke reads letters OCR mistakes for digits inside a date`() {
+        assertThat(underTest(listOf("Date:12/1l/2O26"), enIn)).containsExactly(LocalDate.of(2026, 11, 12))
+    }
+
+    @Test
+    fun `test that invoke ignores a date that continues into another number`() {
+        assertThat(underTest(listOf("Ref 12/11/2026/5/1", "Lot 1.12/11/2026"), enIn)).isEmpty()
+    }
 }
