@@ -35,6 +35,7 @@ dependencies {
     implementation(project(":feature:modelsetup"))
     implementation(project(":feature:settings"))
     implementation(project(":data:receipts"))
+    implementation(project(":data:ocr"))
     implementation(project(":data:ai"))
     implementation(project(":data:model-download"))
     implementation(libs.androidx.activity.compose)

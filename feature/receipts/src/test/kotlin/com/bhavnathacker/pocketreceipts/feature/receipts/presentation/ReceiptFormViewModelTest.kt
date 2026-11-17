@@ -14,6 +14,7 @@ import com.bhavnathacker.pocketreceipts.domain.receipt.SaveReceiptUseCase
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.AmountInputFormatter
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.AmountInputParser
+import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.ScanPrefillToReceiptScanMapper
 import com.google.common.truth.Truth.assertThat
 import de.palm.composestateevents.StateEvent
 import kotlinx.coroutines.flow.flowOf
@@ -75,7 +76,14 @@ class ReceiptFormViewModelTest {
         )
     }
 
-    private fun initViewModel(receiptId: Long? = null) {
+    private val scan = ScanPrefill(
+        merchant = "Corner Shop",
+        dates = listOf("2026-02-03", "2026-01-30"),
+        totals = listOf(ScanAmount(21000, "GBP"), ScanAmount(20000, "GBP")),
+    )
+    private val emptyScan = ScanPrefill(merchant = null, dates = emptyList(), totals = emptyList())
+
+    private fun initViewModel(receiptId: Long? = null, scan: ScanPrefill? = null) {
         underTest = ReceiptFormViewModel(
             monitorReceiptUseCase = monitorReceiptUseCase,
             saveReceiptUseCase = saveReceiptUseCase,
@@ -83,8 +91,17 @@ class ReceiptFormViewModelTest {
             getTodayUseCase = getTodayUseCase,
             amountInputParser = amountInputParser,
             amountInputFormatter = amountInputFormatter,
+            scanPrefillToReceiptScanMapper = ScanPrefillToReceiptScanMapper(),
             receiptId = receiptId,
+            scan = scan,
         )
+    }
+
+    private fun stubFormattedTotals() {
+        amountInputFormatter.stub {
+            on { invoke(org.mockito.kotlin.eq(Money(21000, "GBP")), any()) } doReturn "210.00"
+            on { invoke(org.mockito.kotlin.eq(Money(20000, "GBP")), any()) } doReturn "200.00"
+        }
     }
 
     private fun fillValidForm() {
@@ -484,5 +501,183 @@ class ReceiptFormViewModelTest {
         underTest.onSaveFailedEventConsumed()
 
         assertThat(underTest.uiState.value.saveFailedEvent).isEqualTo(StateEvent.Consumed)
+    }
+
+    @Test
+    fun `test that init marks the form as a review when a scan is given`() {
+        initViewModel(scan = scan)
+
+        assertThat(underTest.uiState.value.isReview).isTrue()
+    }
+
+    @Test
+    fun `test that init does not mark the form as a review without a scan`() {
+        initViewModel()
+
+        assertThat(underTest.uiState.value.isReview).isFalse()
+    }
+
+    @Test
+    fun `test that init prefills the merchant from the scan`() {
+        initViewModel(scan = scan)
+
+        assertThat(underTest.uiState.value.merchant).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that init prefills the first scanned date`() {
+        initViewModel(scan = scan)
+
+        assertThat(underTest.uiState.value.purchaseDate).isEqualTo(LocalDate.of(2026, 2, 3))
+    }
+
+    @Test
+    fun `test that init prefills the first scanned total as amount text`() {
+        stubFormattedTotals()
+        initViewModel(scan = scan)
+
+        assertThat(underTest.uiState.value.amount).isEqualTo("210.00")
+    }
+
+    @Test
+    fun `test that init prefills the currency of the first scanned total`() {
+        initViewModel(scan = scan)
+
+        assertThat(underTest.uiState.value.currencyCode).isEqualTo("GBP")
+    }
+
+    @Test
+    fun `test that init sets category Other for a scan`() {
+        initViewModel(scan = scan)
+
+        assertThat(underTest.uiState.value.category).isEqualTo(ReceiptCategory.OTHER)
+    }
+
+    @Test
+    fun `test that init exposes the scanned dates as candidates`() {
+        initViewModel(scan = scan)
+
+        assertThat(underTest.uiState.value.dateCandidates)
+            .containsExactly(LocalDate.of(2026, 2, 3), LocalDate.of(2026, 1, 30))
+            .inOrder()
+    }
+
+    @Test
+    fun `test that init exposes the scanned totals as candidates`() {
+        initViewModel(scan = scan)
+
+        assertThat(underTest.uiState.value.totalCandidates)
+            .containsExactly(Money(21000, "GBP"), Money(20000, "GBP"))
+            .inOrder()
+    }
+
+    @Test
+    fun `test that init uses today when the scan has no dates`() {
+        initViewModel(scan = emptyScan)
+
+        assertThat(underTest.uiState.value.purchaseDate).isEqualTo(today)
+    }
+
+    @Test
+    fun `test that init leaves the amount empty when the scan has no totals`() {
+        initViewModel(scan = emptyScan)
+
+        assertThat(underTest.uiState.value.amount).isEmpty()
+    }
+
+    @Test
+    fun `test that init uses the default currency when the scan has no totals`() {
+        initViewModel(scan = emptyScan)
+
+        assertThat(underTest.uiState.value.currencyCode).isEqualTo("INR")
+    }
+
+    @Test
+    fun `test that init leaves the merchant empty when the scan has none`() {
+        initViewModel(scan = emptyScan)
+
+        assertThat(underTest.uiState.value.merchant).isEmpty()
+    }
+
+    @Test
+    fun `test that init fires nothingRecognizedEvent when the scan is empty`() {
+        initViewModel(scan = emptyScan)
+
+        assertThat(underTest.uiState.value.nothingRecognizedEvent).isEqualTo(StateEvent.Triggered)
+    }
+
+    @Test
+    fun `test that init does not fire nothingRecognizedEvent when the scan found a merchant`() {
+        initViewModel(scan = emptyScan.copy(merchant = "Corner Shop"))
+
+        assertThat(underTest.uiState.value.nothingRecognizedEvent).isEqualTo(StateEvent.Consumed)
+    }
+
+    @Test
+    fun `test that onNothingRecognizedEventConsumed consumes the event`() {
+        initViewModel(scan = emptyScan)
+
+        underTest.onNothingRecognizedEventConsumed()
+
+        assertThat(underTest.uiState.value.nothingRecognizedEvent).isEqualTo(StateEvent.Consumed)
+    }
+
+    @Test
+    fun `test that onDateCandidateClick sets the purchase date`() {
+        initViewModel(scan = scan)
+
+        underTest.onDateCandidateClick(LocalDate.of(2026, 1, 30))
+
+        assertThat(underTest.uiState.value.purchaseDate).isEqualTo(LocalDate.of(2026, 1, 30))
+    }
+
+    @Test
+    fun `test that onDateCandidateClick clears the date error`() = runTest {
+        stubInvalid(ReceiptFieldError.DateInFuture)
+        initViewModel(scan = scan)
+        underTest.onSave()
+
+        underTest.onDateCandidateClick(LocalDate.of(2026, 1, 30))
+
+        assertThat(underTest.uiState.value.dateError).isNull()
+    }
+
+    @Test
+    fun `test that onTotalCandidateClick sets the amount text`() {
+        stubFormattedTotals()
+        initViewModel(scan = scan)
+
+        underTest.onTotalCandidateClick(Money(20000, "GBP"))
+
+        assertThat(underTest.uiState.value.amount).isEqualTo("200.00")
+    }
+
+    @Test
+    fun `test that onTotalCandidateClick sets the currency`() {
+        initViewModel(scan = scan)
+
+        underTest.onTotalCandidateClick(Money(450, "EUR"))
+
+        assertThat(underTest.uiState.value.currencyCode).isEqualTo("EUR")
+    }
+
+    @Test
+    fun `test that onTotalCandidateClick clears the amount error`() = runTest {
+        stubInvalid(ReceiptFieldError.TotalNotPositive)
+        initViewModel(scan = scan)
+        underTest.onSave()
+
+        underTest.onTotalCandidateClick(Money(20000, "GBP"))
+
+        assertThat(underTest.uiState.value.amountError).isNull()
+    }
+
+    @Test
+    fun `test that onSave adds a new receipt when reviewing a scan`() = runTest {
+        initViewModel(scan = scan)
+
+        underTest.onSave()
+
+        verify(saveReceiptUseCase).invoke(org.mockito.kotlin.isNull(), any())
     }
 }

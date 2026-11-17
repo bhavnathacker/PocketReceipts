@@ -1,0 +1,84 @@
+package com.bhavnathacker.pocketreceipts.domain.scan
+
+import com.google.common.truth.Truth.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class MerchantCandidateParserTest {
+    private lateinit var underTest: MerchantCandidateParser
+
+    @BeforeAll
+    fun setUp() {
+        underTest = MerchantCandidateParser()
+    }
+
+    @Test
+    fun `test that invoke returns the first name like line`() {
+        assertThat(underTest(listOf("CORNER SHOP", "12 High Street", "Tel 020 7946 0000")))
+            .isEqualTo("CORNER SHOP")
+    }
+
+    @Test
+    fun `test that invoke skips a date line`() {
+        assertThat(underTest(listOf("03/02/2026 10:15", "Corner Shop"))).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that invoke skips an amount line`() {
+        assertThat(underTest(listOf("TOTAL 210.00", "Corner Shop"))).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that invoke skips a phone line`() {
+        assertThat(underTest(listOf("Ph: +91 98765 43210", "Corner Shop"))).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that invoke skips a web address line`() {
+        assertThat(underTest(listOf("www.cornershop.in", "Corner Shop"))).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that invoke skips an email line`() {
+        assertThat(underTest(listOf("hello@cornershop.in", "Corner Shop"))).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that invoke skips a tax registration line`() {
+        assertThat(underTest(listOf("GSTIN 29ABCDE1234F1Z5", "Corner Shop"))).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that invoke skips a line with fewer than three letters`() {
+        assertThat(underTest(listOf("#12 *", "Corner Shop"))).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that invoke skips a line that is mostly digits`() {
+        assertThat(underTest(listOf("0042 1234 ABC", "Corner Shop"))).isEqualTo("Corner Shop")
+    }
+
+    @Test
+    fun `test that invoke collapses whitespace`() {
+        assertThat(underTest(listOf("  CORNER    SHOP  "))).isEqualTo("CORNER SHOP")
+    }
+
+    @Test
+    fun `test that invoke cuts the name to one hundred characters`() {
+        assertThat(underTest(listOf("A".repeat(150)))).hasLength(100)
+    }
+
+    @Test
+    fun `test that invoke returns null when no name is in the top five lines`() {
+        val lines = listOf("01/02/2026", "12.00", "#1", "www.shop.in", "Tel 020 7946 0000", "Corner Shop")
+
+        assertThat(underTest(lines)).isNull()
+    }
+
+    @Test
+    fun `test that invoke returns null when there are no lines`() {
+        assertThat(underTest(emptyList())).isNull()
+    }
+}

@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -15,14 +16,20 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
+import com.bhavnathacker.pocketreceipts.domain.receipt.Money
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
+import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.MoneyFormatter
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model.ReceiptFormUiState
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import de.palm.composestateevents.triggered
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 class ReceiptFormScreenTest {
@@ -195,5 +202,96 @@ class ReceiptFormScreenTest {
         composeRule.onNode(hasText("Search currencies") and hasSetTextAction()).performTextInput("rupee")
 
         composeRule.onNodeWithText("INR", substring = true).assertIsDisplayed()
+    }
+
+    private val reviewForm = emptyForm.copy(
+        isReview = true,
+        merchant = "Corner Shop",
+        amount = "210.00",
+        currencyCode = "GBP",
+        purchaseDate = LocalDate.of(2026, 2, 3),
+        dateCandidates = listOf(LocalDate.of(2026, 2, 3), LocalDate.of(2026, 1, 30)),
+        totalCandidates = listOf(Money(21000, "GBP"), Money(20000, "GBP")),
+    )
+
+    private var pickedDate: LocalDate? = null
+    private var pickedTotal: Money? = null
+
+    private fun setReviewScreen(uiState: ReceiptFormUiState = reviewForm) {
+        composeRule.setContent {
+            PocketReceiptsTheme {
+                ReceiptFormScreen(
+                    uiState = uiState,
+                    onClose = {},
+                    onSave = {},
+                    onMerchantChange = {},
+                    onAmountChange = {},
+                    onCurrencyChange = {},
+                    onDateChange = {},
+                    onCategoryChange = {},
+                    onNoteChange = {},
+                    onDateCandidateClick = { pickedDate = it },
+                    onTotalCandidateClick = { pickedTotal = it },
+                )
+            }
+        }
+    }
+
+    private fun totalLabel(money: Money) = MoneyFormatter()(money, Locale.getDefault())
+
+    private fun dateLabel(date: LocalDate) =
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()).format(date)
+
+    @Test
+    fun test_that_a_scanned_receipt_form_is_titled_review_receipt() {
+        setReviewScreen()
+
+        composeRule.onNodeWithText("Review receipt").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_the_total_in_the_form_is_the_selected_candidate() {
+        setReviewScreen()
+
+        composeRule.onNodeWithContentDescription("Use total ${totalLabel(Money(21000, "GBP"))}").assertIsSelected()
+    }
+
+    @Test
+    fun test_that_tapping_a_total_candidate_reports_it() {
+        setReviewScreen()
+
+        composeRule.onNodeWithContentDescription("Use total ${totalLabel(Money(20000, "GBP"))}").performClick()
+
+        assertThat(pickedTotal).isEqualTo(Money(20000, "GBP"))
+    }
+
+    @Test
+    fun test_that_the_date_in_the_form_is_the_selected_candidate() {
+        setReviewScreen()
+
+        composeRule.onNodeWithContentDescription("Use date ${dateLabel(LocalDate.of(2026, 2, 3))}").assertIsSelected()
+    }
+
+    @Test
+    fun test_that_tapping_a_date_candidate_reports_it() {
+        setReviewScreen()
+
+        composeRule.onNodeWithContentDescription("Use date ${dateLabel(LocalDate.of(2026, 1, 30))}").performClick()
+
+        assertThat(pickedDate).isEqualTo(LocalDate.of(2026, 1, 30))
+    }
+
+    @Test
+    fun test_that_a_manual_form_shows_no_candidates() {
+        setScreen(emptyForm)
+
+        composeRule.onNodeWithContentDescription("Use total", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun test_that_an_empty_scan_shows_the_nothing_recognized_message() {
+        setReviewScreen(emptyForm.copy(isReview = true, nothingRecognizedEvent = triggered))
+
+        composeRule.onNodeWithText("Nothing could be read from this scan").assertIsDisplayed()
     }
 }

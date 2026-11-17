@@ -145,6 +145,103 @@ class PrivacyRulesTest {
         assertThat(violations).isEmpty()
     }
 
+    @Test
+    fun `test that internetPermissionViolations accepts a listed library when the app removes INTERNET`() {
+        val violations = PrivacyRules.internetPermissionViolations(
+            mapOf(
+                "project :app" to manifest(REMOVE_INTERNET),
+                CCT_BACKEND to manifest(DECLARE_INTERNET),
+            ),
+        )
+
+        assertThat(violations).isEmpty()
+    }
+
+    @Test
+    fun `test that internetPermissionViolations reports a listed library when the app keeps INTERNET`() {
+        val violations = PrivacyRules.internetPermissionViolations(
+            mapOf(
+                "project :app" to manifest(""),
+                CCT_BACKEND to manifest(DECLARE_INTERNET),
+            ),
+        )
+
+        assertThat(violations).containsExactly(
+            "$CCT_BACKEND declares android.permission.INTERNET (only :data:model-download may)",
+        )
+    }
+
+    @Test
+    fun `test that internetPermissionViolations reports an unlisted library when the app removes INTERNET`() {
+        val violations = PrivacyRules.internetPermissionViolations(
+            mapOf(
+                "project :app" to manifest(REMOVE_INTERNET),
+                "lib:a:1" to manifest(DECLARE_INTERNET),
+            ),
+        )
+
+        assertThat(violations).containsExactly(
+            "lib:a:1 declares android.permission.INTERNET (only :data:model-download may)",
+        )
+    }
+
+    @Test
+    fun `test that internetPermissionViolations ignores a removal in a library manifest`() {
+        val violations = PrivacyRules.internetPermissionViolations(
+            mapOf(
+                "project :app" to manifest(""),
+                "project :feature:capture" to manifest(REMOVE_INTERNET),
+                CCT_BACKEND to manifest(DECLARE_INTERNET),
+            ),
+        )
+
+        assertThat(violations).hasSize(1)
+    }
+
+    @Test
+    fun `test that usageLoggingBackendViolations reports a registered backend`() {
+        val violations = PrivacyRules.usageLoggingBackendViolations(
+            variantName = "debug",
+            mergedManifest = manifest(
+                """<application>
+                    <service android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery">
+                        <meta-data
+                            android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+                            android:value="cct" />
+                    </service>
+                </application>""",
+            ),
+        )
+
+        assertThat(violations).containsExactly(
+            "debug merged manifest registers usage-logging backend " +
+                "com.google.android.datatransport.cct.CctBackendFactory " +
+                "(remove its meta-data in app/src/main/AndroidManifest.xml)",
+        )
+    }
+
+    @Test
+    fun `test that usageLoggingBackendViolations is empty when no backend is registered`() {
+        val violations = PrivacyRules.usageLoggingBackendViolations(
+            variantName = "release",
+            mergedManifest = manifest(
+                """<application>
+                    <service android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery" />
+                    <meta-data android:name="com.google.android.gms.version" android:value="1" />
+                </application>""",
+            ),
+        )
+
+        assertThat(violations).isEmpty()
+    }
+
     private fun manifest(body: String) =
         """<manifest xmlns:android="http://schemas.android.com/apk/res/android">$body</manifest>"""
+
+    private companion object {
+        const val CCT_BACKEND = "com.google.android.datatransport:transport-backend-cct:2.3.3"
+        const val DECLARE_INTERNET = """<uses-permission android:name="android.permission.INTERNET" />"""
+        const val REMOVE_INTERNET =
+            """<uses-permission android:name="android.permission.INTERNET" tools:node="remove" />"""
+    }
 }

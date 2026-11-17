@@ -1,0 +1,122 @@
+package com.bhavnathacker.pocketreceipts.domain.scan
+
+import com.bhavnathacker.pocketreceipts.domain.receipt.GetTodayUseCase
+import com.google.common.truth.Truth.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
+import java.time.Clock
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.util.Locale
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class DateCandidateParserTest {
+    private lateinit var underTest: DateCandidateParser
+
+    private val enIn = Locale.forLanguageTag("en-IN")
+    private val enUs = Locale.forLanguageTag("en-US")
+    private val deDe = Locale.forLanguageTag("de-DE")
+
+    @BeforeAll
+    fun setUp() {
+        val clock = Clock.fixed(LocalDate.of(2026, 11, 16).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+        underTest = DateCandidateParser(getToday = GetTodayUseCase(clock))
+    }
+
+    @Test
+    fun `test that invoke reads an ambiguous date day first when locale is en-IN`() {
+        assertThat(underTest(listOf("Date: 03/02/2026"), enIn)).containsExactly(LocalDate.of(2026, 2, 3))
+    }
+
+    @Test
+    fun `test that invoke reads an ambiguous date month first when locale is en-US`() {
+        assertThat(underTest(listOf("Date: 03/02/2026"), enUs)).containsExactly(LocalDate.of(2026, 3, 2))
+    }
+
+    @Test
+    fun `test that invoke reads day first when only that order is a valid date`() {
+        assertThat(underTest(listOf("25/12/2025"), enUs)).containsExactly(LocalDate.of(2025, 12, 25))
+    }
+
+    @Test
+    fun `test that invoke reads month first when only that order is a valid date`() {
+        assertThat(underTest(listOf("12/25/2025"), enIn)).containsExactly(LocalDate.of(2025, 12, 25))
+    }
+
+    @Test
+    fun `test that invoke reads a dot separated date`() {
+        assertThat(underTest(listOf("03.02.2026 14:05"), deDe)).containsExactly(LocalDate.of(2026, 2, 3))
+    }
+
+    @Test
+    fun `test that invoke reads an ISO date regardless of locale`() {
+        assertThat(underTest(listOf("2026-02-03"), enUs)).containsExactly(LocalDate.of(2026, 2, 3))
+    }
+
+    @Test
+    fun `test that invoke maps a two digit year to this century`() {
+        assertThat(underTest(listOf("03-02-26"), enIn)).containsExactly(LocalDate.of(2026, 2, 3))
+    }
+
+    @Test
+    fun `test that invoke reads day month name year`() {
+        assertThat(underTest(listOf("3 Feb 2026"), enUs)).containsExactly(LocalDate.of(2026, 2, 3))
+    }
+
+    @Test
+    fun `test that invoke reads month name day comma year`() {
+        assertThat(underTest(listOf("Feb 3, 2026"), enIn)).containsExactly(LocalDate.of(2026, 2, 3))
+    }
+
+    @Test
+    fun `test that invoke reads an upper case short month with a two digit year`() {
+        assertThat(underTest(listOf("03-FEB-26"), enIn)).containsExactly(LocalDate.of(2026, 2, 3))
+    }
+
+    @Test
+    fun `test that invoke reads a month name in the device language`() {
+        assertThat(underTest(listOf("3. März 2026"), deDe)).containsExactly(LocalDate.of(2026, 3, 3))
+    }
+
+    @Test
+    fun `test that invoke drops dates after today`() {
+        assertThat(underTest(listOf("Valid until 31/12/2026", "Date 01/11/2026"), enIn))
+            .containsExactly(LocalDate.of(2026, 11, 1))
+    }
+
+    @Test
+    fun `test that invoke keeps the order of appearance`() {
+        assertThat(underTest(listOf("01/10/2026", "15/09/2026"), enIn))
+            .containsExactly(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 9, 15))
+            .inOrder()
+    }
+
+    @Test
+    fun `test that invoke removes duplicate dates`() {
+        assertThat(underTest(listOf("01/10/2026", "2026-10-01", "1 Oct 2026"), enIn))
+            .containsExactly(LocalDate.of(2026, 10, 1))
+    }
+
+    @Test
+    fun `test that invoke returns at most five dates`() {
+        val lines = (1..7).map { "0$it/01/2026" }
+
+        assertThat(underTest(lines, enIn)).hasSize(5)
+    }
+
+    @Test
+    fun `test that invoke ignores impossible dates`() {
+        assertThat(underTest(listOf("32/13/2026", "31/02/2026"), enIn)).isEmpty()
+    }
+
+    @Test
+    fun `test that invoke ignores amounts, times and phone numbers`() {
+        assertThat(underTest(listOf("TOTAL 1,234.50", "12:30", "Tel 020 7946 0000"), enIn)).isEmpty()
+    }
+
+    @Test
+    fun `test that invoke ignores words that are not month names`() {
+        assertThat(underTest(listOf("2 Milk 2026"), enIn)).isEmpty()
+    }
+}

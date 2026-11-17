@@ -31,6 +31,7 @@ object AppIcons {
     @DrawableRes val Back = R.drawable.ic_arrow_back
     @DrawableRes val Close = R.drawable.ic_close
     @DrawableRes val Calendar = R.drawable.ic_calendar_today
+    @DrawableRes val Camera = R.drawable.ic_photo_camera
 }
 
 @PreviewLightDark
@@ -73,6 +74,7 @@ private fun AppIconsActionsPreview() {
                     AppIcons.Back,
                     AppIcons.Close,
                     AppIcons.Calendar,
+                    AppIcons.Camera,
                 ).forEach { icon ->
                     Icon(painter = painterResource(icon), contentDescription = null)
                 }

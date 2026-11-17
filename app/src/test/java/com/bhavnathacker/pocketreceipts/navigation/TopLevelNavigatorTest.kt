@@ -1,6 +1,7 @@
 package com.bhavnathacker.pocketreceipts.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.bhavnathacker.pocketreceipts.feature.capture.presentation.CaptureKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -118,5 +119,12 @@ class TopLevelNavigatorTest {
         underTest.select(Ask)
 
         assertThat(backStack).containsExactly(Receipts, Ask).inOrder()
+    }
+
+    @Test
+    fun `test that selectedKey stays the start key when the capture flow is on top`() {
+        backStack.add(CaptureKey)
+
+        assertThat(underTest.selectedKey).isEqualTo(Receipts)
     }
 }
