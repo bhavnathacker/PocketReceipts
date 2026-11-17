@@ -1,6 +1,7 @@
 package com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper
 
 import com.bhavnathacker.pocketreceipts.domain.receipt.Money
+import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
 import com.bhavnathacker.pocketreceipts.domain.scan.ReceiptScan
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.ScanPrefill
 import java.time.LocalDate
@@ -9,7 +10,7 @@ import javax.inject.Inject
 
 /**
  * Reads the [ScanPrefill] in the review form's key back into a [ReceiptScan].
- * Dates that aren't ISO-8601 text are skipped.
+ * Dates that aren't ISO-8601 text, and an unknown category name, are skipped.
  */
 internal class ScanPrefillToReceiptScanMapper @Inject constructor() {
 
@@ -24,5 +25,6 @@ internal class ScanPrefillToReceiptScanMapper @Inject constructor() {
                 }
             },
             totals = prefill.totals.map { Money(it.minorUnits, it.currencyCode) },
+            category = ReceiptCategory.entries.firstOrNull { it.name == prefill.category },
         )
 }

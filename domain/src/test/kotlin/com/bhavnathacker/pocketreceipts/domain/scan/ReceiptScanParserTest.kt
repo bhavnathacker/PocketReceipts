@@ -3,6 +3,7 @@ package com.bhavnathacker.pocketreceipts.domain.scan
 import com.bhavnathacker.pocketreceipts.domain.receipt.GetDefaultCurrencyUseCase
 import com.bhavnathacker.pocketreceipts.domain.receipt.GetTodayUseCase
 import com.bhavnathacker.pocketreceipts.domain.receipt.Money
+import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -92,6 +93,7 @@ class ReceiptScanParserTest {
             dateCandidateParser = DateCandidateParser(GetTodayUseCase(clock)),
             amountCandidateParser = AmountCandidateParser(GetDefaultCurrencyUseCase()),
             merchantCandidateParser = MerchantCandidateParser(),
+            categoryCandidateParser = CategoryCandidateParser(),
         )
     }
 
@@ -168,6 +170,28 @@ class ReceiptScanParserTest {
     @Test
     fun `test that invoke preselects the yen total of a Japanese receipt`() {
         assertThat(underTest(japaneseReceipt, JA_JP).totals.first()).isEqualTo(Money(280, "JPY"))
+    }
+
+    @Test
+    fun `test that invoke suggests Groceries for an Indian general store`() {
+        assertThat(underTest(indianReceipt, EN_IN).category).isEqualTo(ReceiptCategory.GROCERIES)
+    }
+
+    @Test
+    fun `test that invoke suggests Dining for a US cafe`() {
+        assertThat(underTest(usReceipt, EN_US).category).isEqualTo(ReceiptCategory.DINING)
+    }
+
+    @Test
+    fun `test that invoke suggests no category for a UK corner shop`() {
+        assertThat(underTest(ukReceipt, EN_GB).category).isNull()
+    }
+
+    @Test
+    fun `test that invoke suggests Shopping for a menswear receipt`() {
+        val receipt = RecognizedText(listOf("MEN'S WEAR", "Linking Road", "Shirt 1,299.00", "Net Amount 1,169.10"))
+
+        assertThat(underTest(receipt, EN_IN).category).isEqualTo(ReceiptCategory.SHOPPING)
     }
 
     @Test

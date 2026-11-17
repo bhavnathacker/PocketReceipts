@@ -34,12 +34,15 @@ data class ReceiptFormKey(
  *
  * @property dates ISO-8601 dates (`2026-02-03`), best first.
  * @property totals Total candidates, best first.
+ * @property category The suggested [ReceiptCategory][com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory]
+ * by name, or null if none was suggested.
  */
 @Serializable
 data class ScanPrefill(
     val merchant: String?,
     val dates: List<String>,
     val totals: List<ScanAmount>,
+    val category: String? = null,
 )
 
 /**
