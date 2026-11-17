@@ -15,7 +15,10 @@ import javax.inject.Inject
  *
  * Reads numeric dates (`03/02/2026`, `03.02.26`, `03-02-2026`), ISO dates
  * (`2026-02-03`) and dates with English or [locale] month names (`3 Feb 2026`,
- * `Feb 3, 2026`, `03-FEB-26`). When day and month could be swapped, [locale]'s
+ * `Feb 3, 2026`, `03-FEB-26`, `3 Feb' 26`). Labels glued to the date (`Date:-03/02/2026`,
+ * `Dt.03/02/26`), spaces around separators (`03 / 02 / 2026`) and a time right
+ * after the date (`03/02/2026,10:30`) are allowed, and the letters OCR mistakes
+ * for digits inside a date (`2O26`, `1l`) are read as digits. When day and month could be swapped, [locale]'s
  * short date pattern decides the order. Two-digit years are 20yy. Dates after
  * today are dropped, duplicates are removed, and at most [MAX_DATES] are returned.
  */
@@ -27,7 +30,7 @@ class DateCandidateParser @Inject constructor(
         val monthFirst = isMonthFirst(locale)
         val months = monthNames(locale)
         return lines
-            .flatMap { line -> datesIn(line, monthFirst, months) }
+            .flatMap { line -> datesIn(OCR_DIGIT_LOOKALIKE.replace(line) { digitFor(it.value) }, monthFirst, months) }
             .filterNot { it.isAfter(today) }
             .distinct()
             .take(MAX_DATES)
@@ -61,6 +64,8 @@ class DateCandidateParser @Inject constructor(
         val monthFirstDate = dateOrNull(year, month = a, day = b)
         return if (monthFirst) monthFirstDate ?: dayFirst else dayFirst ?: monthFirstDate
     }
+
+    private fun digitFor(letter: String): String = if (letter in "Oo") "0" else "1"
 
     private fun year(text: String): Int = when (text.length) {
         2 -> 2000 + text.toInt()
@@ -107,9 +112,19 @@ class DateCandidateParser @Inject constructor(
         /** The most date candidates returned. */
         const val MAX_DATES = 5
 
-        private val NUMERIC_DATE = Regex("""(?<![\d.,/-])(\d{1,4})([./-])(\d{1,2})\2(\d{2}|\d{4})(?![\d.,/-]?\d)""")
+        /**
+         * Day, month and year (or ISO year first) with one separator, optionally spaced.
+         * Not part of a longer number (`1.03/02/2026`), and not followed by another
+         * date part (`03/02/2026/5`); a time after a comma or slash is fine.
+         */
+        private val NUMERIC_DATE = Regex(
+            """(?<!\d)(?<!\d[.,/-])(\d{1,4})\s?([./-])\s?(\d{1,2})\s?\2\s?(\d{2}|\d{4})(?!\d)(?![.,/-]\d+[.,/-]\d)""",
+        )
+
+        /** `O`/`o` and `l`/`I` between a digit and a digit or date separator, as OCR misreads them. */
+        private val OCR_DIGIT_LOOKALIKE = Regex("""(?<=\d)[OolI](?=[\d./-])|(?<=[\d./-])[OolI](?=\d)""")
         private val DAY_MONTH_YEAR = Regex(
-            """(?<!\d)(\d{1,2})(?:st|nd|rd|th)?[\s./-]*(\p{L}{3,})\.?[\s./,-]*(\d{4}|\d{2})(?!\d)""",
+            """(?<!\d)(\d{1,2})(?:st|nd|rd|th)?[\s./-]*(\p{L}{3,})\.?[\s./,'’-]*(\d{4}|\d{2})(?!\d)""",
         )
         private val MONTH_DAY_YEAR = Regex("""(?<!\p{L})(\p{L}{3,})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4}|\d{2})(?!\d)""")
     }

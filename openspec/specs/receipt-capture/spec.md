@@ -47,7 +47,7 @@ The app SHALL delete the scanned image once its text has been read, whether or n
 - **THEN** the image is deleted and the user is offered to try again or enter the receipt manually
 
 ### Requirement: Date candidates
-The app SHALL find the dates printed on a scanned receipt, in numeric formats (for example 03/02/2026, 03.02.2026, 2026-02-03, 03-02-26) and with month names (for example 3 Feb 2026, Feb 3, 2026). When the day/month order is ambiguous, the device locale's order SHALL decide. Dates in the future SHALL NOT be suggested. The first valid date on the receipt SHALL be preselected.
+The app SHALL find the dates printed on a scanned receipt, numeric (03/02/2026, 2026-02-03) or with month names (3 Feb 2026). Labels glued to the date, spaced separators, a time right after it and digits OCR misreads as letters SHALL NOT stop a date being found. When the day/month order is ambiguous, the device locale's order SHALL decide. Dates in the future SHALL NOT be suggested. The first valid date on the receipt SHALL be preselected.
 
 #### Scenario: Day-first locale
 - **WHEN** the device locale is en-IN and the receipt shows "03/02/2026"
@@ -56,6 +56,14 @@ The app SHALL find the dates printed on a scanned receipt, in numeric formats (f
 #### Scenario: Month-first locale
 - **WHEN** the device locale is en-US and the receipt shows "03/02/2026"
 - **THEN** 2 March 2026 is suggested
+
+#### Scenario: Date glued to its label
+- **WHEN** the device locale is en-IN and the receipt shows "Date:-12/11/2026"
+- **THEN** 12 November 2026 is preselected instead of today
+
+#### Scenario: Messy printed dates
+- **WHEN** the receipt shows "Dt.12/11/26", "12 / 11 / 2026", "12/11/2026,10:30", "12 Nov' 26" or "12/1l/2O26"
+- **THEN** 12 November 2026 is suggested for each
 
 #### Scenario: Future date ignored
 - **WHEN** the receipt shows a date after today (for example a "valid until" date) and a past purchase date
