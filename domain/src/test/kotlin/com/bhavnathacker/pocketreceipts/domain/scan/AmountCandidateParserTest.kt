@@ -186,4 +186,66 @@ class AmountCandidateParserTest {
     fun `test that invoke uses the default currency next to an English word that is a currency code`() {
         assertThat(underTest(listOf("CUP 3.00"), enUs)).containsExactly(Money(300, "USD"))
     }
+
+    @Test
+    fun `test that invoke puts the net amount first when the gross total comes after it`() {
+        val lines = listOf("NET AMOUNT 950.00", "GROSS TOTAL 1,000.00")
+
+        assertThat(underTest(lines, enIn).first()).isEqualTo(Money(95000, "INR"))
+    }
+
+    @Test
+    fun `test that invoke puts the net amount first when a plain total comes after it`() {
+        val lines = listOf("Net Payable 950.00", "Total 1,000.00")
+
+        assertThat(underTest(lines, enIn).first()).isEqualTo(Money(95000, "INR"))
+    }
+
+    @Test
+    fun `test that invoke puts the grand total before a plain total`() {
+        val lines = listOf("Grand Total 1,180.00", "Total Amount 1,000.00")
+
+        assertThat(underTest(lines, enIn).first()).isEqualTo(Money(118000, "INR"))
+    }
+
+    @Test
+    fun `test that invoke puts the amount due before a plain total`() {
+        val lines = listOf("Amount Due 45.00", "Total 50.00")
+
+        assertThat(underTest(lines, enGb).first()).isEqualTo(Money(4500, "GBP"))
+    }
+
+    @Test
+    fun `test that invoke never preselects a gross amount`() {
+        val lines = listOf("Item 300.00", "Gross Amount 1,000.00")
+
+        assertThat(underTest(lines, enIn).first()).isNotEqualTo(Money(100000, "INR"))
+    }
+
+    @Test
+    fun `test that invoke keeps a gross amount as a candidate`() {
+        val lines = listOf("Gross Amount 1,000.00", "Net Amount 950.00")
+
+        assertThat(underTest(lines, enIn)).contains(Money(100000, "INR"))
+    }
+
+    @Test
+    fun `test that invoke ignores a time range`() {
+        assertThat(underTest(listOf("Exchange Time 1.00 to 4.00 pm. within 3 Days Only."), enIn)).isEmpty()
+    }
+
+    @Test
+    fun `test that invoke ignores a single time`() {
+        assertThat(underTest(listOf("Open till 10.30 PM"), enIn)).isEmpty()
+    }
+
+    @Test
+    fun `test that invoke reads a whole amount on a total line`() {
+        assertThat(underTest(listOf("TOTAL 3050"), enIn)).containsExactly(Money(305000, "INR"))
+    }
+
+    @Test
+    fun `test that invoke ignores a whole number on an item total line`() {
+        assertThat(underTest(listOf("Total Items 4"), enIn)).isEmpty()
+    }
 }

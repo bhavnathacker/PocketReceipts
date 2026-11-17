@@ -680,4 +680,11 @@ class ReceiptFormViewModelTest {
 
         verify(saveReceiptUseCase).invoke(org.mockito.kotlin.isNull(), any())
     }
+
+    @Test
+    fun `test that init prefills the category suggested by the scan`() {
+        initViewModel(scan = scan.copy(category = "SHOPPING"))
+
+        assertThat(underTest.uiState.value.category).isEqualTo(ReceiptCategory.SHOPPING)
+    }
 }

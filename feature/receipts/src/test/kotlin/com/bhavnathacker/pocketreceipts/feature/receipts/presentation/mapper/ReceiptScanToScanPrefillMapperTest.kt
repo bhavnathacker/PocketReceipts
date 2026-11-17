@@ -3,6 +3,7 @@ package com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper
 import com.bhavnathacker.pocketreceipts.domain.receipt.Money
 import com.bhavnathacker.pocketreceipts.domain.scan.ReceiptScan
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.ScanAmount
+import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -49,5 +50,17 @@ class ReceiptScanToScanPrefillMapperTest {
         val scan = ReceiptScan(null, emptyList(), (1..10).map { Money(it * 100L, "INR") })
 
         assertThat(underTest(scan).totals).hasSize(8)
+    }
+
+    @Test
+    fun `test that invoke keeps the category by name`() {
+        val scan = ReceiptScan(null, emptyList(), emptyList(), ReceiptCategory.SHOPPING)
+
+        assertThat(underTest(scan).category).isEqualTo("SHOPPING")
+    }
+
+    @Test
+    fun `test that invoke leaves the category empty when none was suggested`() {
+        assertThat(underTest(ReceiptScan(null, emptyList(), emptyList())).category).isNull()
     }
 }

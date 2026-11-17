@@ -191,6 +191,7 @@ internal class ReceiptFormViewModel @AssistedInject constructor(
             purchaseDate = dates.firstOrNull() ?: today,
             amount = total?.let { amountInputFormatter(it) }.orEmpty(),
             currencyCode = total?.currencyCode ?: currencyCode,
+            category = scan.category ?: ReceiptCategory.OTHER,
             dateCandidates = dates,
             totalCandidates = scan.totals,
             nothingRecognizedEvent = if (nothingRecognized) triggered else consumed,

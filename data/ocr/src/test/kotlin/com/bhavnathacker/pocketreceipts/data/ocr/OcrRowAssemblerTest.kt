@@ -22,7 +22,7 @@ class OcrRowAssemblerTest {
             OcrLine("TOTAL", top = 889, bottom = 921, left = 80),
         )
 
-        assertThat(underTest(lines)).containsExactly("TOTAL 210.00")
+        assertThat(underTest(lines).lines).containsExactly("TOTAL 210.00")
     }
 
     @Test
@@ -33,7 +33,7 @@ class OcrRowAssemblerTest {
             OcrLine("Milk", top = 450, bottom = 480, left = 84),
         )
 
-        assertThat(underTest(lines)).containsExactly("CORNER SHOP", "Milk", "TOTAL").inOrder()
+        assertThat(underTest(lines).lines).containsExactly("CORNER SHOP", "Milk", "TOTAL").inOrder()
     }
 
     @Test
@@ -44,7 +44,7 @@ class OcrRowAssemblerTest {
             OcrLine("Card", top = 990, bottom = 1020, left = 80),
         )
 
-        assertThat(underTest(lines)).containsExactly("TOTAL 210.00", "Card").inOrder()
+        assertThat(underTest(lines).lines).containsExactly("TOTAL 210.00", "Card").inOrder()
     }
 
     @Test
@@ -54,11 +54,46 @@ class OcrRowAssemblerTest {
             OcrLine("TAX", top = 781, bottom = 810, left = 81),
         )
 
-        assertThat(underTest(lines)).containsExactly("SUBTOTAL", "TAX").inOrder()
+        assertThat(underTest(lines).lines).containsExactly("SUBTOTAL", "TAX").inOrder()
     }
 
     @Test
     fun `test that invoke returns no rows when there are no lines`() {
-        assertThat(underTest(emptyList())).isEmpty()
+        assertThat(underTest(emptyList()).lines).isEmpty()
+    }
+
+    /** The header of a real receipt: a large shop name beside a block of small address lines. */
+    private val hitManHeader = listOf(
+        OcrLine("RETAIL INVOICE", top = 611, bottom = 677, left = 481),
+        OcrLine("GF-G/4, Poojan Apartment,", top = 709, bottom = 779, left = 514),
+        OcrLine("Opp. Seema Hall, Anandnagar Road,", top = 776, bottom = 844, left = 513),
+        OcrLine("Satelite, Ahmedabad.", top = 842, bottom = 897, left = 511),
+        OcrLine("970008 24001191191 00194", top = 924, bottom = 987, left = 551),
+        OcrLine("HIT-MAN", top = 664, bottom = 866, left = 1472),
+        OcrLine("MEN'S WEAR", top = 878, bottom = 947, left = 1666),
+    )
+
+    @Test
+    fun `test that invoke keeps a much taller line apart from the small text beside it`() {
+        assertThat(underTest(hitManHeader).lines).containsExactly(
+            "RETAIL INVOICE",
+            "HIT-MAN",
+            "GF-G/4, Poojan Apartment,",
+            "Opp. Seema Hall, Anandnagar Road,",
+            "Satelite, Ahmedabad.",
+            "MEN'S WEAR",
+            "970008 24001191191 00194",
+        ).inOrder()
+    }
+
+    @Test
+    fun `test that invoke reports each row's text height`() {
+        val lines = listOf(
+            OcrLine("HIT-MAN", top = 664, bottom = 866, left = 1472),
+            OcrLine("TOTAL", top = 3199, bottom = 3251, left = 1817),
+            OcrLine("210.00", top = 3195, bottom = 3255, left = 2151),
+        )
+
+        assertThat(underTest(lines).heights).containsExactly(202, 60).inOrder()
     }
 }

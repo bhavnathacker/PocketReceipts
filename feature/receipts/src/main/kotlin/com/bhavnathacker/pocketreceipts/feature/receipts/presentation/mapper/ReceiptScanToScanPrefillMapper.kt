@@ -16,6 +16,7 @@ internal class ReceiptScanToScanPrefillMapper @Inject constructor() {
             merchant = scan.merchant,
             dates = scan.dates.take(MAX_DATES).map { it.toString() },
             totals = scan.totals.take(MAX_TOTALS).map { ScanAmount(it.minorUnits, it.currencyCode) },
+            category = scan.category?.name,
         )
 
     companion object {

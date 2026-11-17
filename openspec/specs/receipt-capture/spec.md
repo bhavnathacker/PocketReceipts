@@ -62,15 +62,31 @@ The app SHALL find the dates printed on a scanned receipt, in numeric formats (f
 - **THEN** only the past date is suggested
 
 ### Requirement: Total candidates
-The app SHALL find the amounts printed on a scanned receipt, in the same exact form as manual entry (minor units, without rounding). The preselected total SHALL be the amount on the last line labelled as a total (for example "TOTAL", "GRAND TOTAL", "AMOUNT DUE", "NET AMOUNT", "SUMME"), or the largest amount when no line is labelled. Other amounts SHALL be offered as alternatives, largest first.
+The app SHALL find the amounts printed on a scanned receipt, in the same exact form as manual entry (minor units, without rounding). A whole number counts as an amount when it is on a line labelled as a total or next to a currency symbol or code; times of day (for example "1.00 to 4.00 pm") SHALL NOT be read as amounts. Handwritten amounts may not be readable; when no amount is found, the total is left for the user to enter. The preselected total SHALL be the amount actually paid: a line labelled with the payable amount (for example "NET AMOUNT", "NET PAYABLE", "AMOUNT DUE", "BALANCE DUE", "GRAND TOTAL") SHALL win over a line labelled only "TOTAL" (or "SUMME", "GESAMT"), wherever each appears; among lines of the same kind, the last one wins. Gross amounts, sub-totals and tax totals SHALL NOT be preselected. When no line is labelled, the largest amount that isn't a gross amount or sub-total SHALL be preselected. All other amounts SHALL be offered as alternatives, largest first.
 
 #### Scenario: Labelled total
 - **WHEN** the receipt lists items of 120.00 and 80.00, "SUBTOTAL 200.00", "TAX 10.00" and "TOTAL 210.00"
 - **THEN** 210.00 is preselected as the total
 
+#### Scenario: Net amount below the gross total
+- **WHEN** the receipt shows "NET AMOUNT 950.00" followed by "GROSS TOTAL 1,000.00"
+- **THEN** 950.00 is preselected, and 1,000.00 is offered as an alternative
+
+#### Scenario: Payable amount before a plain total
+- **WHEN** the receipt shows "Net Payable 950.00" followed by "Total 1,000.00"
+- **THEN** 950.00 is preselected
+
 #### Scenario: No label
 - **WHEN** the receipt shows the amounts 4.50, 12.00 and 16.50 and no total label
 - **THEN** 16.50 is preselected and 12.00 and 4.50 are offered as alternatives
+
+#### Scenario: Whole amount on the total line
+- **WHEN** the receipt shows "TOTAL 3050" and the default currency is INR
+- **THEN** a total of 3050.00 INR is preselected
+
+#### Scenario: Shop hours
+- **WHEN** the receipt's only numbers with decimals are in "Exchange Time 1.00 to 4.00 pm"
+- **THEN** no total is suggested
 
 #### Scenario: Indian grouping
 - **WHEN** the receipt shows "Grand Total ₹1,23,456.50"
@@ -88,14 +104,33 @@ When the receipt prints a currency symbol or code next to the preselected total 
 - **THEN** the review form uses the default currency
 
 ### Requirement: Merchant candidate
-The app SHALL suggest as merchant the first line near the top of the receipt that reads like a name: it has letters, and it isn't a date, an amount, a phone number, a web or email address, or a tax registration line.
+The app SHALL suggest as merchant a line near the top of the receipt that reads like a name: it has letters, and it isn't a document title (for example "RETAIL INVOICE", "TAX INVOICE", "CASH MEMO", "ORIGINAL FOR RECIPIENT"), a date, an amount, a phone number, a web or email address, or a tax registration line. When one such line is printed clearly larger than the rest of the receipt, as shop names usually are, it SHALL be preferred; otherwise the first such line SHALL be suggested. Text printed much larger than the text beside it SHALL NOT be joined with it into one line. A leading "Welcome to" SHALL be dropped.
 
 #### Scenario: Name at the top
 - **WHEN** the receipt's first lines are "CORNER SHOP", "12 High Street" and "Tel 020 7946 0000"
 - **THEN** "CORNER SHOP" is suggested as merchant
 
+#### Scenario: Document title above a large shop name
+- **WHEN** the receipt starts with "RETAIL INVOICE" and an address block, with "HIT-MAN" printed large beside the address
+- **THEN** "HIT-MAN" is suggested as merchant
+
+### Requirement: Category from the shop's name
+The app SHALL suggest a category when the merchant name, or failing that one of the top eight lines of the receipt, names the kind of shop (for example "Wear", "Fashion" or "Boutique" for Shopping; "Medical", "Pharmacy" or "Chemist" for Health; "Supermarket" or "General Store" for Groceries; "Cafe" or "Restaurant" for Dining). Words SHALL match whole words only. When nothing names the kind of shop, no category SHALL be suggested.
+
+#### Scenario: Clothing shop
+- **WHEN** the scanned receipt's merchant is "Men's Wear"
+- **THEN** the review form's category is Shopping
+
+#### Scenario: Medical store
+- **WHEN** the scanned receipt's merchant is "Sai Medicals"
+- **THEN** the review form's category is Health
+
+#### Scenario: No hint
+- **WHEN** the scanned receipt's merchant is "Corner Shop" and no top line names the kind of shop
+- **THEN** the review form's category is Other
+
 ### Requirement: Review before saving
-After a scan, the receipt form SHALL open titled "Review receipt", prefilled with the preselected merchant, date, total and currency, and with category Other. The user SHALL be able to switch the date or total to another candidate with one tap, edit any field, and then save with the same validation as manual entry. Nothing SHALL be saved until the user taps Save. Going back from the review form SHALL return to the Receipts list, not to the scanner.
+After a scan, the receipt form SHALL open titled "Review receipt", prefilled with the preselected merchant, date, total and currency, and with the suggested category, or Other when none was suggested. The user SHALL be able to switch the date or total to another candidate with one tap, edit any field, and then save with the same validation as manual entry. Nothing SHALL be saved until the user taps Save. Going back from the review form SHALL return to the Receipts list, not to the scanner.
 
 #### Scenario: Confirm a scan
 - **WHEN** the review form shows "Corner Shop", today's date and 4.50, and the user taps Save

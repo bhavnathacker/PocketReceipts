@@ -36,7 +36,7 @@ internal class MlKitTextRecognitionRepository @Inject constructor(
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         try {
             val text = recognizer.process(image).await()
-            RecognizedText(ocrRowAssembler(text.ocrLines()))
+            ocrRowAssembler(text.ocrLines())
         } finally {
             recognizer.close()
         }
