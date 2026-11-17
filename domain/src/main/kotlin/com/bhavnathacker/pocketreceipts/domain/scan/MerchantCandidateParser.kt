@@ -7,7 +7,8 @@ import javax.inject.Inject
  * Suggests the merchant from the top [TOP_LINES] lines that read like a name.
  * Such a line has at least three letters, more letters than digits, and isn't a
  * document title (`RETAIL INVOICE`, `CASH MEMO`), a date, an amount, a phone
- * number, a web or email address, or a tax registration line.
+ * number, a web or email address, a tax registration line, or an address (two or
+ * more commas, or `Opp.`/`Nr.` landmarks).
  *
  * When [heights] are known, a name-like line printed at least [PROMINENT_RATIO]
  * times the receipt's median text height wins (the largest one): shops print
@@ -38,6 +39,7 @@ class MerchantCandidateParser @Inject constructor() {
         return letters >= MIN_LETTERS &&
             letters > digits &&
             !isDocumentTitle(line) &&
+            line.count { it == ',' } < MIN_ADDRESS_COMMAS &&
             NOT_A_NAME.none { it.containsMatchIn(line) }
     }
 
@@ -62,6 +64,7 @@ class MerchantCandidateParser @Inject constructor() {
         )
 
         private const val MIN_LETTERS = 3
+        private const val MIN_ADDRESS_COMMAS = 2
         private val WHITESPACE = Regex("""\s+""")
         private val NOT_A_NAME = listOf(
             // Dates
@@ -73,6 +76,8 @@ class MerchantCandidateParser @Inject constructor() {
             Regex("""\+?\d[\d\s-]{6,}\d"""),
             // Web and email addresses
             Regex("""(?i)(https?://|www\.|@|\.(com|in|net|org|co|de|uk)\b)"""),
+            // Address landmarks ("Opp. City Mall", "Nr. Bus Stand")
+            Regex("""(?i)\b(opp|nr)\.(?!\p{L})"""),
             // Tax registration lines
             Regex("""(?i)\b(gstin|gst|vat|tax\s*id|ust-?id(nr)?|tin)\b"""),
         )

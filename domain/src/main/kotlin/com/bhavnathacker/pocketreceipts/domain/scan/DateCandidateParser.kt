@@ -18,7 +18,8 @@ import javax.inject.Inject
  * `Feb 3, 2026`, `03-FEB-26`, `3 Feb' 26`). Labels glued to the date (`Date:-03/02/2026`,
  * `Dt.03/02/26`), spaces around separators (`03 / 02 / 2026`) and a time right
  * after the date (`03/02/2026,10:30`) are allowed, and the letters OCR mistakes
- * for digits inside a date (`2O26`, `1l`) are read as digits. When day and month could be swapped, [locale]'s
+ * for digits inside a date (`2O26`, `1l`) are read as digits, and a zero OCR reads
+ * for the letter O in a month name (`31-0ct-26`, `N0v`) as the letter. When day and month could be swapped, [locale]'s
  * short date pattern decides the order. Two-digit years are 20yy. Dates after
  * today are dropped, duplicates are removed, and at most [MAX_DATES] are returned.
  */
@@ -30,7 +31,7 @@ class DateCandidateParser @Inject constructor(
         val monthFirst = isMonthFirst(locale)
         val months = monthNames(locale)
         return lines
-            .flatMap { line -> datesIn(OCR_DIGIT_LOOKALIKE.replace(line) { digitFor(it.value) }, monthFirst, months) }
+            .flatMap { line -> datesIn(ocrCorrected(line), monthFirst, months) }
             .filterNot { it.isAfter(today) }
             .distinct()
             .take(MAX_DATES)
@@ -64,6 +65,9 @@ class DateCandidateParser @Inject constructor(
         val monthFirstDate = dateOrNull(year, month = a, day = b)
         return if (monthFirst) monthFirstDate ?: dayFirst else dayFirst ?: monthFirstDate
     }
+
+    private fun ocrCorrected(line: String): String =
+        OCR_ZERO_IN_WORD.replace(OCR_DIGIT_LOOKALIKE.replace(line) { digitFor(it.value) }, "o")
 
     private fun digitFor(letter: String): String = if (letter in "Oo") "0" else "1"
 
@@ -122,6 +126,9 @@ class DateCandidateParser @Inject constructor(
         )
 
         /** `O`/`o` and `l`/`I` between a digit and a digit or date separator, as OCR misreads them. */
+        /** A `0` starting or inside a word (`0ct`, `N0v`), as OCR misreads the letter O. */
+        private val OCR_ZERO_IN_WORD = Regex("""(?<![\d\p{L}])0(?=\p{L}{2})|(?<=\p{L})0(?=\p{L})""")
+
         private val OCR_DIGIT_LOOKALIKE = Regex("""(?<=\d)[OolI](?=[\d./-])|(?<=[\d./-])[OolI](?=\d)""")
         private val DAY_MONTH_YEAR = Regex(
             """(?<!\d)(\d{1,2})(?:st|nd|rd|th)?[\s./-]*(\p{L}{3,})\.?[\s./,'’-]*(\d{4}|\d{2})(?!\d)""",

@@ -47,7 +47,7 @@ The app SHALL delete the scanned image once its text has been read, whether or n
 - **THEN** the image is deleted and the user is offered to try again or enter the receipt manually
 
 ### Requirement: Date candidates
-The app SHALL find the dates printed on a scanned receipt, numeric (03/02/2026, 2026-02-03) or with month names (3 Feb 2026). Labels glued to the date, spaced separators, a time right after it and digits OCR misreads as letters SHALL NOT stop a date being found. When the day/month order is ambiguous, the device locale's order SHALL decide. Dates in the future SHALL NOT be suggested. The first valid date on the receipt SHALL be preselected.
+The app SHALL find the dates printed on a scanned receipt, numeric (03/02/2026, 2026-02-03) or with month names (3 Feb 2026). Labels glued to the date, spaced separators, a time right after it and OCR mixing up O and 0 or l and 1 SHALL NOT stop a date being found. When the day/month order is ambiguous, the device locale's order SHALL decide. Dates in the future SHALL NOT be suggested. The first valid date on the receipt SHALL be preselected.
 
 #### Scenario: Day-first locale
 - **WHEN** the device locale is en-IN and the receipt shows "03/02/2026"
@@ -61,6 +61,10 @@ The app SHALL find the dates printed on a scanned receipt, numeric (03/02/2026, 
 - **WHEN** the device locale is en-IN and the receipt shows "Date:-12/11/2026"
 - **THEN** 12 November 2026 is preselected instead of today
 
+#### Scenario: Zero read for O in a month name
+- **WHEN** the device locale is en-IN and OCR reads the printed "31-Oct-26" as "31-0ct-26"
+- **THEN** 31 October 2026 is preselected
+
 #### Scenario: Messy printed dates
 - **WHEN** the receipt shows "Dt.12/11/26", "12 / 11 / 2026", "12/11/2026,10:30", "12 Nov' 26" or "12/1l/2O26"
 - **THEN** 12 November 2026 is suggested for each
@@ -70,7 +74,7 @@ The app SHALL find the dates printed on a scanned receipt, numeric (03/02/2026, 
 - **THEN** only the past date is suggested
 
 ### Requirement: Total candidates
-The app SHALL find the amounts printed on a scanned receipt, in the same exact form as manual entry (minor units, without rounding). A whole number counts as an amount when it is on a line labelled as a total or next to a currency symbol or code; times of day (for example "1.00 to 4.00 pm") SHALL NOT be read as amounts. Handwritten amounts may not be readable; when no amount is found, the total is left for the user to enter. The preselected total SHALL be the amount actually paid: a line labelled with the payable amount (for example "NET AMOUNT", "NET PAYABLE", "AMOUNT DUE", "BALANCE DUE", "GRAND TOTAL") SHALL win over a line labelled only "TOTAL" (or "SUMME", "GESAMT"), wherever each appears; among lines of the same kind, the last one wins. Gross amounts, sub-totals and tax totals SHALL NOT be preselected. When no line is labelled, the largest amount that isn't a gross amount or sub-total SHALL be preselected. All other amounts SHALL be offered as alternatives, largest first.
+The app SHALL find the amounts printed on a scanned receipt, in the same exact form as manual entry (minor units, without rounding). A whole number counts as an amount when it is on a line labelled as a total or next to a currency symbol or code; times of day (for example "1.00 to 4.00 pm") and parts of hyphenated reference numbers (for example "21-115808,21") SHALL NOT be read as amounts. Handwritten amounts may not be readable; when no amount is found, the total is left for the user to enter. The preselected total SHALL be the amount actually paid: a line labelled with the payable amount (for example "NET AMOUNT", "NET PAYABLE", "NET" right before an amount, "AMOUNT DUE", "BALANCE DUE", "GRAND TOTAL") SHALL win over a line labelled only "TOTAL" (or "SUMME", "GESAMT"), wherever each appears; among lines of the same kind, the last one wins. Gross amounts, sub-totals and tax totals SHALL NOT be preselected. When no line is labelled, the largest amount that isn't a gross amount or sub-total SHALL be preselected. All other amounts SHALL be offered as alternatives, largest first.
 
 #### Scenario: Labelled total
 - **WHEN** the receipt lists items of 120.00 and 80.00, "SUBTOTAL 200.00", "TAX 10.00" and "TOTAL 210.00"
@@ -112,7 +116,7 @@ When the receipt prints a currency symbol or code next to the preselected total 
 - **THEN** the review form uses the default currency
 
 ### Requirement: Merchant candidate
-The app SHALL suggest as merchant a line near the top of the receipt that reads like a name: it has letters, and it isn't a document title (for example "RETAIL INVOICE", "TAX INVOICE", "CASH MEMO", "ORIGINAL FOR RECIPIENT"), a date, an amount, a phone number, a web or email address, or a tax registration line. When one such line is printed clearly larger than the rest of the receipt, as shop names usually are, it SHALL be preferred; otherwise the first such line SHALL be suggested. Text printed much larger than the text beside it SHALL NOT be joined with it into one line. A leading "Welcome to" SHALL be dropped.
+The app SHALL suggest as merchant a line near the top of the receipt that reads like a name: it has letters, and it isn't a document title (for example "RETAIL INVOICE", "TAX INVOICE", "CASH MEMO", "ORIGINAL FOR RECIPIENT"), a date, an amount, a phone number, a web or email address, a tax registration line, or an address (two or more commas, or an "Opp."/"Nr." landmark). When one such line is printed clearly larger than the rest of the receipt, as shop names usually are, it SHALL be preferred; otherwise the first such line SHALL be suggested. Text printed much larger than the text beside it SHALL NOT be joined with it into one line. A leading "Welcome to" SHALL be dropped.
 
 #### Scenario: Name at the top
 - **WHEN** the receipt's first lines are "CORNER SHOP", "12 High Street" and "Tel 020 7946 0000"

@@ -153,4 +153,16 @@ class DateCandidateParserTest {
     fun `test that invoke ignores a date that continues into another number`() {
         assertThat(underTest(listOf("Ref 12/11/2026/5/1", "Lot 1.12/11/2026"), enIn)).isEmpty()
     }
+
+    @Test
+    fun `test that invoke reads a month name with a zero OCR reads for the letter O`() {
+        assertThat(underTest(listOf("SELF Bill No C68642 31-0ct-26 21:44:2", "2 N0v 2025"), enIn))
+            .containsExactly(LocalDate.of(2026, 10, 31), LocalDate.of(2025, 11, 2))
+            .inOrder()
+    }
+
+    @Test
+    fun `test that invoke keeps a zero that ends a day before a month name`() {
+        assertThat(underTest(listOf("20Nov2025"), enIn)).containsExactly(LocalDate.of(2025, 11, 20))
+    }
 }
