@@ -10,8 +10,10 @@ import javax.inject.Inject
  * Finds the amounts printed on a receipt and orders them as total candidates.
  *
  * - A number is an amount when it has exactly its currency's decimal places
- *   (`120.00`, `4,50`), or when a currency marker sits next to it (`Rs 1,500`).
- *   This keeps out phone numbers, quantities, years and invoice numbers.
+ *   (`120.00`, `4,50`), when a currency marker sits next to it (`Rs 1,500`), or
+ *   when it is on a line labelled as a total (`TOTAL 3050`). This keeps out phone
+ *   numbers, quantities, years and invoice numbers. Times (`10.30 pm`,
+ *   `1.00 to 4.00 pm`) are never amounts.
  * - The decimal separator is the last `.` or `,`; earlier `,` `.` `'` or spaces are
  *   digit grouping, so `1,23,456.50`, `1.234,56` and `1 234,56` all read without
  *   the locale. Values are exact, in minor units.
@@ -45,7 +47,8 @@ class AmountCandidateParser @Inject constructor(
         return (listOfNotNull(preselected) + others).distinct().take(MAX_TOTALS)
     }
 
-    private fun amountsIn(line: String, defaultCurrency: String, locale: Locale): List<Money> {
+    private fun amountsIn(rawLine: String, defaultCurrency: String, locale: Locale): List<Money> {
+        val line = TIME.replace(rawLine) { " ".repeat(it.value.length) }
         val totalLine = isTotalLine(line)
         return NUMBER.findAll(line).mapNotNull { match ->
             val marker = markerBefore(line.substring(0, match.range.first))
@@ -57,7 +60,7 @@ class AmountCandidateParser @Inject constructor(
             }
             val fractionDigits = Currency.getInstance(currency).defaultFractionDigits.coerceAtLeast(0)
             val number = parseNumber(match.value, fractionDigits) ?: return@mapNotNull null
-            val counts = number.hasDecimals || marker != null || (fractionDigits == 0 && totalLine)
+            val counts = number.hasDecimals || marker != null || totalLine
             if (counts && number.minorUnits > 0) Money(number.minorUnits, currency) else null
         }.toList()
     }
@@ -112,6 +115,11 @@ class AmountCandidateParser @Inject constructor(
         const val MAX_TOTALS = 8
 
         private const val DOLLAR = "$"
+
+        /** A time of day or a range of them, such as `10.30 pm` or `1.00 to 4.00 pm`. */
+        private val TIME = Regex(
+            """(?i)(?<![\d.,])\d{1,2}[.:]\d{2}(?:\s*(?:to|-|–)\s*\d{1,2}[.:]\d{2})?\s*(?:a\.?\s?m|p\.?\s?m|hrs?)\b\.?""",
+        )
 
         private val NUMBER = Regex(
             """(?<![\d.,'])\d+(?:(?:[.,']|[  ](?=\d{3}(?!\d)))\d+)*(?!\d)(?!\s?%)""",

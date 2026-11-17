@@ -28,7 +28,7 @@ class CategoryCandidateParser @Inject constructor() {
 
     companion object {
         /** How many lines from the top are searched when the merchant name has no hint. */
-        const val HEADER_LINES = 5
+        const val HEADER_LINES = 8
 
         private val APOSTROPHE = Regex("""['’]""")
 

@@ -14,7 +14,7 @@ class ReceiptScanParser @Inject constructor(
     private val categoryCandidateParser: CategoryCandidateParser,
 ) {
     operator fun invoke(text: RecognizedText, locale: Locale = Locale.getDefault()): ReceiptScan {
-        val merchant = merchantCandidateParser(text.lines)
+        val merchant = merchantCandidateParser(text.lines, text.heights)
         return ReceiptScan(
             merchant = merchant,
             dates = dateCandidateParser(text.lines, locale),

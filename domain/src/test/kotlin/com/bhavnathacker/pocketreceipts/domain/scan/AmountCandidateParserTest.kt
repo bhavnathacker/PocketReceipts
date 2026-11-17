@@ -228,4 +228,24 @@ class AmountCandidateParserTest {
 
         assertThat(underTest(lines, enIn)).contains(Money(100000, "INR"))
     }
+
+    @Test
+    fun `test that invoke ignores a time range`() {
+        assertThat(underTest(listOf("Exchange Time 1.00 to 4.00 pm. within 3 Days Only."), enIn)).isEmpty()
+    }
+
+    @Test
+    fun `test that invoke ignores a single time`() {
+        assertThat(underTest(listOf("Open till 10.30 PM"), enIn)).isEmpty()
+    }
+
+    @Test
+    fun `test that invoke reads a whole amount on a total line`() {
+        assertThat(underTest(listOf("TOTAL 3050"), enIn)).containsExactly(Money(305000, "INR"))
+    }
+
+    @Test
+    fun `test that invoke ignores a whole number on an item total line`() {
+        assertThat(underTest(listOf("Total Items 4"), enIn)).isEmpty()
+    }
 }

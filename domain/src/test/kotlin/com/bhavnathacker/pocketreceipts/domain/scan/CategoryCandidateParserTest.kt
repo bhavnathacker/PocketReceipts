@@ -69,7 +69,7 @@ class CategoryCandidateParserTest {
 
     @Test
     fun `test that invoke ignores lines below the header`() {
-        val lines = listOf("ACME", "1", "2", "3", "4", "5", "Thank you for shopping")
+        val lines = listOf("ACME", "1", "2", "3", "4", "5", "6", "7", "Opp. City Hospital")
 
         assertThat(underTest("ACME", lines)).isNull()
     }
@@ -87,5 +87,19 @@ class CategoryCandidateParserTest {
     @Test
     fun `test that invoke returns null without a merchant or lines`() {
         assertThat(underTest(null, emptyList())).isNull()
+    }
+
+    @Test
+    fun `test that invoke finds the trade printed below the address`() {
+        val lines = listOf(
+            "RETAIL INVOICE",
+            "HIT-MAN",
+            "GF-G/4, Poojan Apartment,",
+            "Opp. Seema Hall, Anandnagar Road,",
+            "Satelite, Ahmedabad.",
+            "MEN'S WEAR",
+        )
+
+        assertThat(underTest("HIT-MAN", lines)).isEqualTo(ReceiptCategory.SHOPPING)
     }
 }

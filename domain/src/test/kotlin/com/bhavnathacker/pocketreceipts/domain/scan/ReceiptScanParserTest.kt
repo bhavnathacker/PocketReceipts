@@ -86,6 +86,28 @@ class ReceiptScanParserTest {
         ),
     )
 
+    /** ML Kit's rows for a real, partly handwritten receipt (the handwriting isn't readable). */
+    private val hitManReceipt = RecognizedText(
+        lines = listOf(
+            "RETAIL INVOICE",
+            "HIT-MAN",
+            "GF-G/4, Poojan Apartment,",
+            "Opp. Seema Hall, Anandnagar Road,",
+            "Satelite, Ahmedabad.",
+            "MEN'S WEAR",
+            "970008 24001191191 00194",
+            "M/s. Bill No. :",
+            "Dateea9|24",
+            "Qty. Description Rate Amount",
+            "39n",
+            "TOTAL",
+            "Exchange Time 1.00 to 4.00 pm. within 3 Days Only. For, HIT-MAN",
+            "Silk & Embroidery Garments To Be Dry Cleaned Only. MEN'S WEAR",
+            "Subject to Ahmedabad Jurisdiction",
+        ),
+        heights = listOf(66, 202, 70, 68, 55, 69, 63, 41, 133, 72, 145, 52, 104, 73, 83),
+    )
+
     @BeforeAll
     fun setUp() {
         val clock = Clock.fixed(LocalDate.of(2026, 11, 16).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
@@ -192,6 +214,21 @@ class ReceiptScanParserTest {
         val receipt = RecognizedText(listOf("MEN'S WEAR", "Linking Road", "Shirt 1,299.00", "Net Amount 1,169.10"))
 
         assertThat(underTest(receipt, EN_IN).category).isEqualTo(ReceiptCategory.SHOPPING)
+    }
+
+    @Test
+    fun `test that invoke finds the shop name of a receipt titled retail invoice`() {
+        assertThat(underTest(hitManReceipt, EN_IN).merchant).isEqualTo("HIT-MAN")
+    }
+
+    @Test
+    fun `test that invoke suggests Shopping for a receipt from a menswear shop`() {
+        assertThat(underTest(hitManReceipt, EN_IN).category).isEqualTo(ReceiptCategory.SHOPPING)
+    }
+
+    @Test
+    fun `test that invoke offers no total when the amounts are handwritten`() {
+        assertThat(underTest(hitManReceipt, EN_IN).totals).isEmpty()
     }
 
     @Test
