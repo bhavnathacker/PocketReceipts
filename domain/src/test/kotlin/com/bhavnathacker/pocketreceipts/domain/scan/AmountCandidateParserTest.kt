@@ -248,4 +248,21 @@ class AmountCandidateParserTest {
     fun `test that invoke ignores a whole number on an item total line`() {
         assertThat(underTest(listOf("Total Items 4"), enIn)).isEmpty()
     }
+
+    @Test
+    fun `test that invoke preselects the amount after a bare NET label over a gross total`() {
+        val lines = listOf("Gross Total 880.00", "Discount(Rs. 116.00", "NET 764.00")
+
+        assertThat(underTest(lines, enIn).first()).isEqualTo(Money(76400, "INR"))
+    }
+
+    @Test
+    fun `test that invoke does not treat a net weight as the amount paid`() {
+        assertThat(underTest(listOf("Net Wt 2.50 kg", "TOTAL 120.00"), enIn).first()).isEqualTo(Money(12000, "INR"))
+    }
+
+    @Test
+    fun `test that invoke ignores the parts of a hyphenated licence number`() {
+        assertThat(underTest(listOf("D.L No: 21-115808,21B-115810. 20-115807"), enIn)).isEmpty()
+    }
 }

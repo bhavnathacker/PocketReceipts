@@ -108,6 +108,41 @@ class ReceiptScanParserTest {
         heights = listOf(66, 202, 70, 68, 55, 69, 63, 41, 133, 72, 145, 52, 104, 73, 83),
     )
 
+    /** ML Kit's rows for a real printed pharmacy cash memo; the date reads `31-0ct-26`. */
+    private val bharatMedicalReceipt = RecognizedText(
+        lines = listOf(
+            "BHARAT MEDICAL STORES",
+            "OPP. SUN P PHOTO, SHYAMAL CHAR RASTA, SATELLITE, AHMEDABAD.",
+            "B-107,B-105, POPULAR CENTRE, 132\"'ft. RING ROAD, NR. MEDILINK HOSPITAL",
+            "INVOICE",
+            "CASH MEMO GST No 24AANFB8284G176",
+            "Customer: OPD",
+            "ORIGINAL BSNL : (079) 26762820",
+            "Doctor : Address: RAMESH RATHAV |WHATSHOP NO: 7778043555",
+            "SELF Bill No C68642 31-0ct-26 21:44:2",
+            "SR. |Cust Mo:",
+            "DESCRIPTION HSN Mfg BatchNo Discounted Net",
+            "CARTIGEN 1500 TAB",
+            "ExpDtUnit MRP Disc% Amount Oty Amount",
+            "2 30049099 PHA CTTS26020",
+            "YASH INSECTS SPRAY",
+            "11/28 15",
+            "340.00 17% 282.20 30",
+            "3004 COM 200 564.40",
+            "1 200.00 O% 200.00 1",
+            "200.00",
+            "FREEEE HOME DELIVERY Gross Total 880.00",
+            "sUBJECT TO AHMEDABAD JURISDICTION. Email-medicalbharat14 ®gmail.com",
+            "Discount(Rs. 116.00",
+            "*CUTTING STRIPS WONT BE RETURNED* *MEDICINES TO BE RETURNED WITHIN ONE MONTH*",
+            "Round ff -0.40",
+            "pLNo: 21-115808,21 B-115810. 20-115807, 20B-115809. AUTHORISED SIGN.",
+            "NET 764.00",
+            "RupeesSeven Hundred Sixty-Four Only",
+        ),
+        heights = listOf(251, 355, 192, 72, 67, 130, 59, 100, 79, 50, 52, 114, 64, 60, 110, 73, 48, 47, 45, 59, 64, 55, 71, 58, 59, 93, 69, 119),
+    )
+
     @BeforeAll
     fun setUp() {
         val clock = Clock.fixed(LocalDate.of(2026, 11, 16).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
@@ -229,6 +264,26 @@ class ReceiptScanParserTest {
     @Test
     fun `test that invoke offers no total when the amounts are handwritten`() {
         assertThat(underTest(hitManReceipt, EN_IN).totals).isEmpty()
+    }
+
+    @Test
+    fun `test that invoke finds the printed date of a pharmacy cash memo`() {
+        assertThat(underTest(bharatMedicalReceipt, EN_IN).dates).containsExactly(LocalDate.of(2026, 10, 31))
+    }
+
+    @Test
+    fun `test that invoke finds the merchant of a pharmacy cash memo`() {
+        assertThat(underTest(bharatMedicalReceipt, EN_IN).merchant).isEqualTo("BHARAT MEDICAL STORES")
+    }
+
+    @Test
+    fun `test that invoke preselects the net amount of a pharmacy cash memo`() {
+        assertThat(underTest(bharatMedicalReceipt, EN_IN).totals.first()).isEqualTo(Money(76400, "INR"))
+    }
+
+    @Test
+    fun `test that invoke suggests Health for a pharmacy cash memo`() {
+        assertThat(underTest(bharatMedicalReceipt, EN_IN).category).isEqualTo(ReceiptCategory.HEALTH)
     }
 
     @Test

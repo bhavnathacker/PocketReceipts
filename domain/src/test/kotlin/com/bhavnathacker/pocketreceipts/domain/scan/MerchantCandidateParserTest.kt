@@ -135,4 +135,22 @@ class MerchantCandidateParserTest {
 
         assertThat(underTest(lines, heights = listOf(66, 202, 70, 68, 55, 69, 63))).isEqualTo("HIT-MAN")
     }
+
+    @Test
+    fun `test that invoke skips a tall address line on a tilted photo`() {
+        val lines = listOf(
+            "BHARAT MEDICAL STORES",
+            "OPP. SUN P PHOTO, SHYAMAL CHAR RASTA, SATELLITE, AHMEDABAD.",
+            "B-107,B-105, POPULAR CENTRE, 132\"'ft. RING ROAD, NR. MEDILINK HOSPITAL",
+            "INVOICE",
+            "CASH MEMO GST No 24AANFB8284G176",
+        )
+
+        assertThat(underTest(lines, heights = listOf(251, 355, 192, 72, 67))).isEqualTo("BHARAT MEDICAL STORES")
+    }
+
+    @Test
+    fun `test that invoke skips a landmark line`() {
+        assertThat(underTest(listOf("Nr. Bus Stand", "Sai Medicals"))).isEqualTo("Sai Medicals")
+    }
 }

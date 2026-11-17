@@ -122,7 +122,7 @@ class AmountCandidateParser @Inject constructor(
         )
 
         private val NUMBER = Regex(
-            """(?<![\d.,'])\d+(?:(?:[.,']|[  ](?=\d{3}(?!\d)))\d+)*(?!\d)(?!\s?%)""",
+            """(?<![\d.,'])(?<!\d[-/])\d+(?:(?:[.,']|[  ](?=\d{3}(?!\d)))\d+)*(?!\d)(?!\s?%)""",
         )
         private val GROUP_SEPARATOR = Regex("""[.,'  ]""")
         private val MARKER_BEFORE = Regex("""(₹|(?<!\p{L})R[Ss]\.?|€|£|¥|\$|(?<!\p{L})[A-Z]{3})$""")
@@ -145,9 +145,12 @@ class AmountCandidateParser @Inject constructor(
                 """GROSS(\s+(TOTAL|AMOUNT|AMT|VALUE))?|TOTAL\s+GROSS)\b""",
         )
 
-        /** Labels for the amount actually paid; they outrank [TOTAL_LABELS]. */
+        /**
+         * Labels for the amount actually paid; they outrank [TOTAL_LABELS]. A bare
+         * `NET` counts only right before an amount, so `Net Wt` doesn't.
+         */
         private val PAID_LABELS = Regex(
-            """\b(NET\s+(AMOUNT|AMT|PAYABLE|TOTAL|PAY)|AMOUNT\s+(DUE|PAYABLE)|BALANCE\s+DUE|""" +
+            """\b(NET\s+(AMOUNT|AMT|PAYABLE|TOTAL|PAY)|NET(?=\s*[:-]?\s*(RS\.?|₹|INR)?\s*\d)|AMOUNT\s+(DUE|PAYABLE)|BALANCE\s+DUE|""" +
                 """TOTAL\s+(DUE|PAYABLE)|TO\s+PAY|GRAND\s+TOTAL|TOTAL\s+TTC)\b""",
         )
         private val TOTAL_LABELS = Regex("""\b(TOTAL|SUMME|GESAMT)\b""")
