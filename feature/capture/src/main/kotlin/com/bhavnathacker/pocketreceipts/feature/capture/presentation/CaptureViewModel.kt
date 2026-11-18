@@ -43,6 +43,9 @@ internal class CaptureViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Failed to read the scanned receipt")
                 _uiState.update { it.copy(status = CaptureStatus.ReadFailed) }
+            } catch (e: OutOfMemoryError) {
+                Timber.e(e, "Not enough memory to read the scanned receipt")
+                _uiState.update { it.copy(status = CaptureStatus.ReadFailed) }
             }
         }
     }

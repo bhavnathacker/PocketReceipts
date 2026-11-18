@@ -35,8 +35,8 @@ import java.time.LocalDate
 /**
  * The add/edit receipt form: adds a receipt when [receiptId] is `null`,
  * otherwise loads that receipt once and saves changes to it. With [scan], it
- * reviews a scanned receipt: the form starts from the scan's best candidates
- * and offers the others, and saving adds the receipt.
+ * reviews a scanned receipt: the form starts from the values read from it, or
+ * the manual-entry defaults for values that weren't read, and saving adds the receipt.
  */
 @HiltViewModel(assistedFactory = ReceiptFormViewModel.Factory::class)
 internal class ReceiptFormViewModel @AssistedInject constructor(
@@ -159,16 +159,6 @@ internal class ReceiptFormViewModel @AssistedInject constructor(
         }
     }
 
-    fun onDateCandidateClick(date: LocalDate) {
-        onDateChange(date)
-    }
-
-    fun onTotalCandidateClick(total: Money) {
-        _uiState.update {
-            it.copy(amount = amountInputFormatter(total), currencyCode = total.currencyCode, amountError = null)
-        }
-    }
-
     fun onNothingRecognizedEventConsumed() {
         _uiState.update { it.copy(nothingRecognizedEvent = consumed) }
     }
@@ -182,18 +172,16 @@ internal class ReceiptFormViewModel @AssistedInject constructor(
     }
 
     private fun ReceiptFormUiState.prefilledFrom(scan: ReceiptScan): ReceiptFormUiState {
-        val dates = scan.dates.filterNot { it.isAfter(today) }
-        val total = scan.totals.firstOrNull()
-        val nothingRecognized = scan.merchant == null && dates.isEmpty() && scan.totals.isEmpty()
+        val date = scan.date?.takeUnless { it.isAfter(today) }
+        val total = scan.total
+        val nothingRecognized = scan.merchant == null && date == null && total == null
         return copy(
             isReview = true,
             merchant = scan.merchant.orEmpty(),
-            purchaseDate = dates.firstOrNull() ?: today,
+            purchaseDate = date ?: today,
             amount = total?.let { amountInputFormatter(it) }.orEmpty(),
             currencyCode = total?.currencyCode ?: currencyCode,
             category = scan.category ?: ReceiptCategory.OTHER,
-            dateCandidates = dates,
-            totalCandidates = scan.totals,
             nothingRecognizedEvent = if (nothingRecognized) triggered else consumed,
         )
     }

@@ -4,13 +4,16 @@
     See https://developer.android.com/about/versions/12/backup-restore#xml-changes
 
     Receipt data never leaves the phone, so the receipts database is excluded
-    from both cloud backup and device-to-device transfer.
+    from both cloud backup and device-to-device transfer. So is the on-device
+    model (2.6 GB, in app-specific external storage); it is downloaded again.
 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="database" path="." />
+        <exclude domain="external" path="models/" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="database" path="." />
+        <exclude domain="external" path="models/" />
     </device-transfer>
 </data-extraction-rules>

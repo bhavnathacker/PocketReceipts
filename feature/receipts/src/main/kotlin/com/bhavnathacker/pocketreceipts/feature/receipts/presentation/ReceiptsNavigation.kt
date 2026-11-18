@@ -29,24 +29,23 @@ data class ReceiptFormKey(
 ) : NavKey
 
 /**
- * The candidate values of a scanned receipt, kept in the review form's key so they
- * survive configuration changes and process death with the back stack.
+ * The values read from a scanned receipt, kept in the review form's key so they
+ * survive configuration changes and process death with the back stack. Each is
+ * null when nothing was read for it.
  *
- * @property dates ISO-8601 dates (`2026-02-03`), best first.
- * @property totals Total candidates, best first.
- * @property category The suggested [ReceiptCategory][com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory]
- * by name, or null if none was suggested.
+ * @property date An ISO-8601 date (`2026-02-03`).
+ * @property category A [ReceiptCategory][com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory] name.
  */
 @Serializable
 data class ScanPrefill(
-    val merchant: String?,
-    val dates: List<String>,
-    val totals: List<ScanAmount>,
+    val merchant: String? = null,
+    val date: String? = null,
+    val total: ScanAmount? = null,
     val category: String? = null,
 )
 
 /**
- * A total candidate in [ScanPrefill]: an amount in minor units and its ISO 4217 currency code.
+ * The total in [ScanPrefill]: an amount in minor units and its ISO 4217 currency code.
  */
 @Serializable
 data class ScanAmount(
@@ -55,7 +54,7 @@ data class ScanAmount(
 )
 
 /**
- * The review form for [scan]: the receipt form prefilled with its candidates.
+ * The review form for [scan]: the receipt form prefilled with its values.
  */
 fun receiptReviewKey(scan: ReceiptScan): NavKey = ReceiptFormKey(scan = ReceiptScanToScanPrefillMapper()(scan))
 

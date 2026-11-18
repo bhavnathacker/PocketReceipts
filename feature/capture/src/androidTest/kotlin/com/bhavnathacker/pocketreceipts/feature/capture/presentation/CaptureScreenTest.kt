@@ -41,6 +41,7 @@ class CaptureScreenTest {
         setScreen(CaptureStatus.Reading)
 
         composeRule.onNodeWithText("Reading receipt…").assertIsDisplayed()
+        composeRule.onNodeWithText("The receipt reader runs on this phone", substring = true).assertIsDisplayed()
     }
 
     @Test

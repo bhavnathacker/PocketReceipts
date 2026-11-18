@@ -14,8 +14,6 @@
     <string name="receipt_form_add_title">Add receipt</string>
     <string name="receipt_form_edit_title">Edit receipt</string>
     <string name="receipt_form_review_title">Review receipt</string>
-    <string name="receipt_form_use_total">Use total %1$s</string>
-    <string name="receipt_form_use_date">Use date %1$s</string>
     <string name="receipt_form_nothing_recognized">Nothing could be read from this scan</string>
     <string name="receipt_form_save">Save</string>
     <string name="receipt_form_close">Close</string>

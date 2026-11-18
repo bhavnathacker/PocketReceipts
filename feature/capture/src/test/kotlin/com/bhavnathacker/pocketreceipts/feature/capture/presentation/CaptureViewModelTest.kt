@@ -26,7 +26,7 @@ class CaptureViewModelTest {
 
     private val scanReceiptUseCase = mock<ScanReceiptUseCase>()
 
-    private val scan = ReceiptScan(merchant = "Corner Shop", dates = emptyList(), totals = emptyList())
+    private val scan = ReceiptScan(merchant = "Corner Shop")
 
     @AfterEach
     fun tearDown() {
@@ -71,6 +71,26 @@ class CaptureViewModelTest {
     @Test
     fun `test that onImageScanned moves to ReadFailed when reading fails`() = runTest {
         stubScan { throw IOException("unreadable") }
+        initViewModel()
+
+        underTest.onImageScanned(IMAGE_URI)
+
+        assertThat(underTest.uiState.value.status).isEqualTo(CaptureStatus.ReadFailed)
+    }
+
+    @Test
+    fun `test that onImageScanned moves to ReadFailed when the receipt reader fails`() = runTest {
+        stubScan { throw IllegalStateException("unreadable reply") }
+        initViewModel()
+
+        underTest.onImageScanned(IMAGE_URI)
+
+        assertThat(underTest.uiState.value.status).isEqualTo(CaptureStatus.ReadFailed)
+    }
+
+    @Test
+    fun `test that onImageScanned moves to ReadFailed when the receipt reader runs out of memory`() = runTest {
+        stubScan { throw OutOfMemoryError("model") }
         initViewModel()
 
         underTest.onImageScanned(IMAGE_URI)

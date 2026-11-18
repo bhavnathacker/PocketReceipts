@@ -2,7 +2,6 @@ package com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Stable
-import com.bhavnathacker.pocketreceipts.domain.receipt.Money
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
 import de.palm.composestateevents.StateEvent
 import de.palm.composestateevents.consumed
@@ -14,8 +13,6 @@ import java.time.LocalDate
  *
  * @property today The latest date the date picker allows.
  * @property isReview The form reviews a scanned receipt before it is added.
- * @property dateCandidates Dates found on the scanned receipt, best first.
- * @property totalCandidates Totals found on the scanned receipt, best first.
  * @property closeEvent The form should close: the receipt was saved, or the edited receipt no longer exists.
  * @property saveFailedEvent Saving failed unexpectedly; the input is kept so the user can retry.
  * @property nothingRecognizedEvent Nothing could be read from the scan; the form shows the defaults.
@@ -32,8 +29,6 @@ data class ReceiptFormUiState(
     val purchaseDate: LocalDate,
     val category: ReceiptCategory = ReceiptCategory.OTHER,
     val note: String = "",
-    val dateCandidates: List<LocalDate> = emptyList(),
-    val totalCandidates: List<Money> = emptyList(),
     @param:StringRes val merchantError: Int? = null,
     @param:StringRes val amountError: Int? = null,
     @param:StringRes val dateError: Int? = null,
