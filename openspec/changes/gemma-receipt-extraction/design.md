@@ -97,16 +97,14 @@ The checking step (`ReceiptFieldsChecker` in `:domain`) turns `ExtractedReceipt`
 
 `:data:ai` reads the model path through the domain `ModelRepository`, not by depending on `:data:model-download`. Data modules don't depend on each other, and `verifyModuleDependencies` enforces that.
 
-### 5. LiteRT-LM engine: load per scan, GPU then CPU
+### 5. LiteRT-LM engine: load per scan, CPU only
 
 - **Load per scan:** `:data:ai` creates the `Engine` when a scan needs it and closes it when extraction ends.
   - Keeping 0.8–1.7 GB resident while the user browses the list isn't worth it for an occasional scan.
   - The price is a few seconds of load time per scan, which the reading progress covers.
-- **Backend:** GPU is tried first, because it is faster and lighter on memory per the model card. If GPU initialization throws, the CPU backend is used.
-  - This is a choice of backend, not a fallback to rules: no model still means no scan.
-  - The `uses-native-library` entries for OpenCL go in `:data:ai`'s manifest, `required="false"`.
+- **CPU backend only.** The first plan was GPU first, then CPU. On the emulator, which has no OpenCL, LiteRT-LM's GPU backend fell back to WebGPU, ran for about 15 minutes and then failed; the CPU backend then did the same job in about a minute. Phones without OpenCL (Pixels, for example) take the same WebGPU path. The CPU backend behaves the same on every phone, and the model card shows about 2 s to first token on a recent phone's CPU. There are no GPU manifest entries.
 - **Off the main thread:** all engine work runs on a dedicated single-thread dispatcher.
-- **Alternative:** a long-lived singleton with an idle timeout. Revisit when Ask uses the engine too.
+- **Alternative:** a long-lived singleton with an idle timeout. Revisit when Ask uses the engine too, and revisit the GPU backend once it can be detected as fast and reliable on a given phone.
 
 ### 6. Prompt and output
 
@@ -118,6 +116,7 @@ The checking step (`ReceiptFieldsChecker` in `:domain`) turns `ExtractedReceipt`
 - **Output format:** a single JSON object only: `{"merchant": string|null, "date": "YYYY-MM-DD"|null, "total": "1234.56"|null, "currency": "INR"|null, "category": "HEALTH"|null}`.
 - **Instruction rules:**
   - The total is the amount actually paid (net or payable, not gross).
+  - The currency is a printed symbol or code if there is one; otherwise the currency of the country the receipt is from (address, phone or tax numbers); the phone's default currency only when that can't be told.
   - The merchant is the shop's name, not an address or a document title.
   - Return null rather than guess.
 - **Sampling:** greedy (top-k 1), with output capped at about 200 tokens.

@@ -35,7 +35,7 @@ class ReceiptPromptBuilderTest {
             - merchant: the shop or business name as printed. Not an address, a document title (such as TAX INVOICE, RETAIL INVOICE or CASH MEMO) or a customer's name.
             - date: the purchase or invoice date as YYYY-MM-DD. A two-digit year means 20YY. Not an expiry date.
             - total: the amount actually paid, as a plain number with a dot for decimals and no thousands separators. When the receipt shows a gross total and a lower net, payable or grand total, use the amount paid.
-            - currency: the ISO 4217 code of the total. Use INR when the receipt shows no currency.
+            - currency: the ISO 4217 code of the total. Use a currency symbol or code printed on the receipt (such as ₹, Rs, €, $, £). If there is none, use the currency of the country the receipt is from, judging by its address, phone numbers or tax numbers (an Indian GST number or city means INR). Use INR only when you can't tell.
             - category: one of GROCERIES, DINING, TRANSPORT, SHOPPING, BILLS, HEALTH, ENTERTAINMENT, TRAVEL, OTHER, chosen from the kind of shop and what was bought.
             - Use null for a field you can't find. Don't guess.
 

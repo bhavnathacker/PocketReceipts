@@ -30,7 +30,7 @@
 
 ## 4. Gemma extraction (`:data:ai`)
 
-- [x] 4.1 Add the OpenCL `uses-native-library` entries (`required="false"`) to `:data:ai`'s manifest and a single-thread inference dispatcher. Implement engine creation from `ModelRepository.modelPath()`, GPU first and CPU if GPU initialization throws, closed after each use. Implement `ModelRuntimeRepository.canLoad` (the load test). Verify it compiles.
+- [x] 4.1 Add a single-thread inference dispatcher and engine creation from `ModelRepository.modelPath()` on the CPU backend, closed after each use (GPU was dropped after the real-model run: see design decision 5). Implement `ModelRuntimeRepository.canLoad` (the load test). Verify it compiles.
 - [x] 4.2 Write the extraction prompt builder: instruction, today, default currency, allowed categories, numbered OCR rows, JSON-only reply. Verify with a unit test that pins the prompt for a fixed input.
 - [x] 4.3 Write the reply parser: find the first `{…}`, decode it leniently into a DTO, and map it to `ExtractedReceipt`; prose or broken JSON throws an extraction error. Verify with unit tests: a clean reply, a reply wrapped in prose or code fences, nulls, extra keys, and garbage.
 - [x] 4.4 Implement `DefaultReceiptExtractionRepository` (greedy sampling, output capped at about 200 tokens) and bind it with Hilt. Verify `./gradlew :app:assembleDebug` succeeds.
@@ -56,8 +56,8 @@
 
 ## 8. Real-model verification
 
-- [ ] 8.1 On the emulator or a device, run the full setup: download, checking, then Receipts. Verify that after a restart setup isn't shown, and that turning off the network during the download shows the no-connection message with a working Retry.
-- [ ] 8.2 Scan the Bharat Medical Stores cash memo and the HIT-MAN receipt (photos supplied by the owner, not committed). Verify the Bharat review form shows BHARAT MEDICAL STORES, 31 Oct 2026, 764.00 INR, Health, and record the HIT-MAN result and the time per scan in the PR.
+- [x] 8.1 On the emulator or a device, run the full setup: download, checking, then Receipts. Verify that after a restart setup isn't shown, and that turning off the network during the download shows the no-connection message with a working Retry.
+- [x] 8.2 Scan the Bharat Medical Stores cash memo and the HIT-MAN receipt (photos supplied by the owner, not committed). Verify the Bharat review form shows BHARAT MEDICAL STORES, 31 Oct 2026, 764.00 INR, Health, and record the HIT-MAN result and the time per scan in the PR.
 
 ## Workflow follow-up
 

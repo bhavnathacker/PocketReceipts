@@ -38,8 +38,10 @@ internal class ReceiptPromptBuilder @Inject constructor() {
                     "or grand total, use the amount paid.",
             )
             appendLine(
-                "- currency: the ISO 4217 code of the total. Use $defaultCurrency when the receipt shows " +
-                    "no currency.",
+                "- currency: the ISO 4217 code of the total. Use a currency symbol or code printed on the " +
+                    "receipt (such as ₹, Rs, €, \$, £). If there is none, use the currency of the country the " +
+                    "receipt is from, judging by its address, phone numbers or tax numbers (an Indian GST number " +
+                    "or city means INR). Use $defaultCurrency only when you can't tell.",
             )
             appendLine(
                 "- category: one of ${ReceiptCategory.entries.joinToString(", ") { it.name }}, " +
