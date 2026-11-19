@@ -32,8 +32,8 @@ The text of a scanned receipt SHALL be read on the device. The scanned image and
 - **THEN** the review form opens with values read from the receipt
 
 #### Scenario: Reading in progress
-- **WHEN** the scan is finished and its text is being read
-- **THEN** a progress indicator is shown, and the user can cancel and return to the Receipts list
+- **WHEN** the scan is finished and its text is being read or Gemma is reading its fields
+- **THEN** a progress indicator says the receipt is being read, and the user can cancel and return to the Receipts list
 
 ### Requirement: Scanned images are not kept
 The app SHALL delete the scanned image once its text has been read, whether or not a receipt is saved. The image SHALL NOT be stored with the receipt.
@@ -46,123 +46,66 @@ The app SHALL delete the scanned image once its text has been read, whether or n
 - **WHEN** reading the scanned image fails
 - **THEN** the image is deleted and the user is offered to try again or enter the receipt manually
 
-### Requirement: Date candidates
-The app SHALL find the dates printed on a scanned receipt, numeric (03/02/2026, 2026-02-03) or with month names (3 Feb 2026). Labels glued to the date, spaced separators, a time right after it and OCR mixing up O and 0 or l and 1 SHALL NOT stop a date being found. When the day/month order is ambiguous, the device locale's order SHALL decide. Dates in the future SHALL NOT be suggested. The first valid date on the receipt SHALL be preselected.
-
-#### Scenario: Day-first locale
-- **WHEN** the device locale is en-IN and the receipt shows "03/02/2026"
-- **THEN** 3 February 2026 is suggested
-
-#### Scenario: Month-first locale
-- **WHEN** the device locale is en-US and the receipt shows "03/02/2026"
-- **THEN** 2 March 2026 is suggested
-
-#### Scenario: Date glued to its label
-- **WHEN** the device locale is en-IN and the receipt shows "Date:-12/11/2026"
-- **THEN** 12 November 2026 is preselected instead of today
-
-#### Scenario: Zero read for O in a month name
-- **WHEN** the device locale is en-IN and OCR reads the printed "31-Oct-26" as "31-0ct-26"
-- **THEN** 31 October 2026 is preselected
-
-#### Scenario: Messy printed dates
-- **WHEN** the receipt shows "Dt.12/11/26", "12 / 11 / 2026", "12/11/2026,10:30", "12 Nov' 26" or "12/1l/2O26"
-- **THEN** 12 November 2026 is suggested for each
-
-#### Scenario: Future date ignored
-- **WHEN** the receipt shows a date after today (for example a "valid until" date) and a past purchase date
-- **THEN** only the past date is suggested
-
-### Requirement: Total candidates
-The app SHALL find the amounts printed on a scanned receipt, in the same exact form as manual entry (minor units, without rounding). A whole number counts as an amount when it is on a line labelled as a total or next to a currency symbol or code; times of day (for example "1.00 to 4.00 pm") and parts of hyphenated reference numbers (for example "21-115808,21") SHALL NOT be read as amounts. Handwritten amounts may not be readable; when no amount is found, the total is left for the user to enter. The preselected total SHALL be the amount actually paid: a line labelled with the payable amount (for example "NET AMOUNT", "NET PAYABLE", "NET" right before an amount, "AMOUNT DUE", "BALANCE DUE", "GRAND TOTAL") SHALL win over a line labelled only "TOTAL" (or "SUMME", "GESAMT"), wherever each appears; among lines of the same kind, the last one wins. Gross amounts, sub-totals and tax totals SHALL NOT be preselected. When no line is labelled, the largest amount that isn't a gross amount or sub-total SHALL be preselected. All other amounts SHALL be offered as alternatives, largest first.
-
-#### Scenario: Labelled total
-- **WHEN** the receipt lists items of 120.00 and 80.00, "SUBTOTAL 200.00", "TAX 10.00" and "TOTAL 210.00"
-- **THEN** 210.00 is preselected as the total
-
-#### Scenario: Net amount below the gross total
-- **WHEN** the receipt shows "NET AMOUNT 950.00" followed by "GROSS TOTAL 1,000.00"
-- **THEN** 950.00 is preselected, and 1,000.00 is offered as an alternative
-
-#### Scenario: Payable amount before a plain total
-- **WHEN** the receipt shows "Net Payable 950.00" followed by "Total 1,000.00"
-- **THEN** 950.00 is preselected
-
-#### Scenario: No label
-- **WHEN** the receipt shows the amounts 4.50, 12.00 and 16.50 and no total label
-- **THEN** 16.50 is preselected and 12.00 and 4.50 are offered as alternatives
-
-#### Scenario: Whole amount on the total line
-- **WHEN** the receipt shows "TOTAL 3050" and the default currency is INR
-- **THEN** a total of 3050.00 INR is preselected
-
-#### Scenario: Shop hours
-- **WHEN** the receipt's only numbers with decimals are in "Exchange Time 1.00 to 4.00 pm"
-- **THEN** no total is suggested
-
-#### Scenario: Indian grouping
-- **WHEN** the receipt shows "Grand Total ₹1,23,456.50"
-- **THEN** a total of 123456.50 INR is preselected
-
-### Requirement: Currency from the receipt
-When the receipt prints a currency symbol or code next to the preselected total (for example ₹, Rs, INR, $, €, £), the review form SHALL use that currency. Otherwise it SHALL use the default currency for new receipts.
-
-#### Scenario: Symbol on the receipt
-- **WHEN** the device's default currency is INR and the receipt's total reads "€ 4,50"
-- **THEN** the review form shows a total of 4.50 EUR
-
-#### Scenario: No symbol
-- **WHEN** the receipt's total has no currency symbol or code
-- **THEN** the review form uses the default currency
-
-### Requirement: Merchant candidate
-The app SHALL suggest as merchant a line near the top of the receipt that reads like a name: it has letters, and it isn't a document title (for example "RETAIL INVOICE", "TAX INVOICE", "CASH MEMO", "ORIGINAL FOR RECIPIENT"), a date, an amount, a phone number, a web or email address, a tax registration line, or an address (two or more commas, or an "Opp."/"Nr." landmark). When one such line is printed clearly larger than the rest of the receipt, as shop names usually are, it SHALL be preferred; otherwise the first such line SHALL be suggested. Text printed much larger than the text beside it SHALL NOT be joined with it into one line. A leading "Welcome to" SHALL be dropped.
-
-#### Scenario: Name at the top
-- **WHEN** the receipt's first lines are "CORNER SHOP", "12 High Street" and "Tel 020 7946 0000"
-- **THEN** "CORNER SHOP" is suggested as merchant
-
-#### Scenario: Document title above a large shop name
-- **WHEN** the receipt starts with "RETAIL INVOICE" and an address block, with "HIT-MAN" printed large beside the address
-- **THEN** "HIT-MAN" is suggested as merchant
-
-### Requirement: Category from the shop's name
-The app SHALL suggest a category when the merchant name, or failing that one of the top eight lines of the receipt, names the kind of shop (for example "Wear", "Fashion" or "Boutique" for Shopping; "Medical", "Pharmacy" or "Chemist" for Health; "Supermarket" or "General Store" for Groceries; "Cafe" or "Restaurant" for Dining). Words SHALL match whole words only. When nothing names the kind of shop, no category SHALL be suggested.
-
-#### Scenario: Clothing shop
-- **WHEN** the scanned receipt's merchant is "Men's Wear"
-- **THEN** the review form's category is Shopping
-
-#### Scenario: Medical store
-- **WHEN** the scanned receipt's merchant is "Sai Medicals"
-- **THEN** the review form's category is Health
-
-#### Scenario: No hint
-- **WHEN** the scanned receipt's merchant is "Corner Shop" and no top line names the kind of shop
-- **THEN** the review form's category is Other
+#### Scenario: Gemma fails
+- **WHEN** the text was recognized but Gemma fails or returns an answer that can't be read
+- **THEN** the image is deleted and the user is offered to try again or enter the receipt manually
 
 ### Requirement: Review before saving
-After a scan, the receipt form SHALL open titled "Review receipt", prefilled with the preselected merchant, date, total and currency, and with the suggested category, or Other when none was suggested. The user SHALL be able to switch the date or total to another candidate with one tap, edit any field, and then save with the same validation as manual entry. Nothing SHALL be saved until the user taps Save. Going back from the review form SHALL return to the Receipts list, not to the scanner.
+After a scan, the receipt form SHALL open titled "Review receipt", prefilled with Gemma's merchant, date, total, currency and category, or the manual-entry defaults for any field Gemma didn't return (today's date, the default currency, Other). The user SHALL be able to edit any field and then save with the same validation as manual entry. Nothing SHALL be saved until the user taps Save. Going back from the review form SHALL return to the Receipts list, not to the scanner.
 
 #### Scenario: Confirm a scan
 - **WHEN** the review form shows "Corner Shop", today's date and 4.50, and the user taps Save
 - **THEN** the receipt is saved and appears in the Receipts list
 
 #### Scenario: Pick another total
-- **WHEN** the preselected total is 210.00 and the user taps the 200.00 candidate
-- **THEN** the total field shows 200.00
+- **WHEN** the review form shows a total of 210.00 and the user changes it to 200.00 and taps Save
+- **THEN** the receipt is saved with a total of 200.00
 
 #### Scenario: Discard a scan
 - **WHEN** the user goes back from the review form without saving
 - **THEN** the Receipts list is shown and no receipt is created
 
 #### Scenario: Nothing recognised
-- **WHEN** the scan contains no readable text, date or amount
+- **WHEN** the scan contains no readable text, or Gemma returns no merchant, date or total
 - **THEN** the review form opens with the empty fields and defaults of manual entry, and a message says nothing could be read
 
 ### Requirement: Review survives configuration changes
-The review form, including its candidates and any edits, SHALL survive configuration changes such as rotation.
+The review form, including Gemma's values and any edits, SHALL survive configuration changes such as rotation.
 
 #### Scenario: Rotate while reviewing
-- **WHEN** the user switches the total to another candidate and rotates the device
-- **THEN** the review form still shows the chosen total and the other candidates
+- **WHEN** the user edits the prefilled total and rotates the device
+- **THEN** the review form still shows the edited total and the other prefilled values
+
+### Requirement: Receipt fields read by Gemma
+The app SHALL pass the recognized text of a scan to the on-device Gemma model, which SHALL return one merchant, purchase date, total, currency and category. The review form SHALL be prefilled with these values. Recognized text and Gemma's answer SHALL stay on the device. There SHALL be no rule-based extraction: when Gemma returns no value for a field, that field SHALL be left at its manual-entry default.
+
+#### Scenario: Printed pharmacy cash memo
+- **WHEN** the scanned receipt is the Bharat Medical Stores cash memo whose text reads "BHARAT MEDICAL STORES", "31-0ct-26", "Gross Total 880.00" and "NET 764.00"
+- **THEN** the review form shows merchant "BHARAT MEDICAL STORES", date 31 October 2026, total 764.00 INR and category Health
+
+#### Scenario: Amount actually paid
+- **WHEN** the receipt shows a gross total and a lower net or payable amount
+- **THEN** the total is the net or payable amount
+
+#### Scenario: Currency on the receipt
+- **WHEN** the device's default currency is INR and the receipt's total reads "€ 4,50"
+- **THEN** the review form shows a total of 4.50 EUR
+
+#### Scenario: Field not found
+- **WHEN** Gemma finds no total on the receipt
+- **THEN** the total field is empty and the currency is the default currency
+
+### Requirement: Gemma's answer is checked
+Before prefilling, the app SHALL discard any value Gemma returns that isn't valid for the form: a date that can't be parsed or is after today, a currency that isn't an ISO 4217 code, a total that isn't a positive amount, or a category outside the app's categories. A merchant longer than the form allows SHALL be cut to that length. A discarded value SHALL leave its field at the manual-entry default.
+
+#### Scenario: Future date
+- **WHEN** Gemma returns a purchase date after today
+- **THEN** the review form's date is today
+
+#### Scenario: Unknown category
+- **WHEN** Gemma returns a category that isn't one of the app's categories
+- **THEN** the review form's category is Other
+
+#### Scenario: Not an amount
+- **WHEN** Gemma returns a total that isn't a positive amount
+- **THEN** the total field is empty
