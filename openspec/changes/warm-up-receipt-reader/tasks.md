@@ -24,7 +24,7 @@
 
 - [x] 5.1 Update the KDoc of `LiteRtModelRuntime` and `CaptureViewModel`, the on-device AI note in `.claude/CLAUDE.md`, and the README's Gemma feature text (model loaded while scanning, kept for 2 minutes). Verify the text matches the receipt-capture spec delta.
 - [x] 5.2 Run `./gradlew check` and the connected tests for `:feature:capture` and `:app` on the emulator (`ANDROID_SERIAL=emulator-5554`). Verify all pass.
-- [ ] 5.3 On the emulator with the real model, scan the Bharat Medical Stores receipt twice in a row (photo supplied by the owner, not committed, deleted from the emulator afterwards). Record the time from the scanner's Done to the review form for each scan against the earlier 53 s, check from the debug logs that the second scan didn't load the model, and check that the logs show a release 2 minutes later. Record the results in the PR.
+- [x] 5.3 On the emulator with the real model, scan the Bharat Medical Stores receipt twice in a row (photo supplied by the owner, not committed, deleted from the emulator afterwards). Record the time from the scanner's Done to the review form for each scan against the earlier 53 s, check from the debug logs that the second scan didn't load the model, and check that the logs show a release 2 minutes later. Record the results in the PR.
 
 ## Workflow follow-up
 
