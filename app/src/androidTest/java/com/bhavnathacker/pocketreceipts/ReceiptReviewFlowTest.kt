@@ -50,8 +50,8 @@ class ReceiptReviewFlowTest {
     private val compact = WindowSizeClass(minWidthDp = 0, minHeightDp = 0)
     private val scan = ReceiptScan(
         merchant = "Scanned Shop",
-        dates = listOf(LocalDate.now()),
-        totals = listOf(Money(450, "USD")),
+        date = LocalDate.now(),
+        total = Money(450, "USD"),
     )
 
     @Before

@@ -85,15 +85,4 @@ class OcrRowAssemblerTest {
             "970008 24001191191 00194",
         ).inOrder()
     }
-
-    @Test
-    fun `test that invoke reports each row's text height`() {
-        val lines = listOf(
-            OcrLine("HIT-MAN", top = 664, bottom = 866, left = 1472),
-            OcrLine("TOTAL", top = 3199, bottom = 3251, left = 1817),
-            OcrLine("210.00", top = 3195, bottom = 3255, left = 2151),
-        )
-
-        assertThat(underTest(lines).heights).containsExactly(202, 60).inOrder()
-    }
 }

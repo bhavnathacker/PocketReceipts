@@ -140,6 +140,11 @@ internal fun CaptureScreen(
                 CaptureStatus.Reading -> {
                     CircularProgressIndicator()
                     Text(stringResource(R.string.capture_reading), style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        stringResource(R.string.capture_reading_detail),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
                     TextButton(onClick = onCancel) { Text(stringResource(R.string.capture_cancel)) }
                 }
                 CaptureStatus.Unavailable -> {

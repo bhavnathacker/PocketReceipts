@@ -146,10 +146,11 @@ class PrivacyRulesTest {
     }
 
     @Test
-    fun `test that internetPermissionViolations accepts a listed library when the app removes INTERNET`() {
+    fun `test that internetPermissionViolations accepts a listed library when the app removes its backend`() {
         val violations = PrivacyRules.internetPermissionViolations(
             mapOf(
-                "project :app" to manifest(REMOVE_INTERNET),
+                "project :app" to manifest(REMOVE_CCT_BACKEND),
+                "project :data:model-download" to manifest(DECLARE_INTERNET),
                 CCT_BACKEND to manifest(DECLARE_INTERNET),
             ),
         )
@@ -158,7 +159,7 @@ class PrivacyRulesTest {
     }
 
     @Test
-    fun `test that internetPermissionViolations reports a listed library when the app keeps INTERNET`() {
+    fun `test that internetPermissionViolations reports a listed library when the app keeps its backend`() {
         val violations = PrivacyRules.internetPermissionViolations(
             mapOf(
                 "project :app" to manifest(""),
@@ -172,10 +173,22 @@ class PrivacyRulesTest {
     }
 
     @Test
-    fun `test that internetPermissionViolations reports an unlisted library when the app removes INTERNET`() {
+    fun `test that internetPermissionViolations reports a listed library when the app only removes INTERNET`() {
         val violations = PrivacyRules.internetPermissionViolations(
             mapOf(
                 "project :app" to manifest(REMOVE_INTERNET),
+                CCT_BACKEND to manifest(DECLARE_INTERNET),
+            ),
+        )
+
+        assertThat(violations).hasSize(1)
+    }
+
+    @Test
+    fun `test that internetPermissionViolations reports an unlisted library when the app removes the backend`() {
+        val violations = PrivacyRules.internetPermissionViolations(
+            mapOf(
+                "project :app" to manifest(REMOVE_CCT_BACKEND),
                 "lib:a:1" to manifest(DECLARE_INTERNET),
             ),
         )
@@ -186,11 +199,11 @@ class PrivacyRulesTest {
     }
 
     @Test
-    fun `test that internetPermissionViolations ignores a removal in a library manifest`() {
+    fun `test that internetPermissionViolations ignores a backend removal in a library manifest`() {
         val violations = PrivacyRules.internetPermissionViolations(
             mapOf(
                 "project :app" to manifest(""),
-                "project :feature:capture" to manifest(REMOVE_INTERNET),
+                "project :feature:capture" to manifest(REMOVE_CCT_BACKEND),
                 CCT_BACKEND to manifest(DECLARE_INTERNET),
             ),
         )
@@ -243,5 +256,10 @@ class PrivacyRulesTest {
         const val DECLARE_INTERNET = """<uses-permission android:name="android.permission.INTERNET" />"""
         const val REMOVE_INTERNET =
             """<uses-permission android:name="android.permission.INTERNET" tools:node="remove" />"""
+        const val REMOVE_CCT_BACKEND =
+            """<application><service android:name="com.google.android.datatransport.runtime.backends.""" +
+                """TransportBackendDiscovery" tools:node="merge"><meta-data """ +
+                """android:name="backend:com.google.android.datatransport.cct.CctBackendFactory" """ +
+                """tools:node="remove" /></service></application>"""
     }
 }

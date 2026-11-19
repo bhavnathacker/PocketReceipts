@@ -10,21 +10,21 @@ import javax.inject.Inject
 
 /**
  * Reads the [ScanPrefill] in the review form's key back into a [ReceiptScan].
- * Dates that aren't ISO-8601 text, and an unknown category name, are skipped.
+ * A date that isn't ISO-8601 text, and an unknown category name, become null.
  */
 internal class ScanPrefillToReceiptScanMapper @Inject constructor() {
 
     operator fun invoke(prefill: ScanPrefill): ReceiptScan =
         ReceiptScan(
             merchant = prefill.merchant,
-            dates = prefill.dates.mapNotNull { text ->
+            date = prefill.date?.let { text ->
                 try {
                     LocalDate.parse(text)
                 } catch (_: DateTimeParseException) {
                     null
                 }
             },
-            totals = prefill.totals.map { Money(it.minorUnits, it.currencyCode) },
+            total = prefill.total?.let { Money(it.minorUnits, it.currencyCode) },
             category = ReceiptCategory.entries.firstOrNull { it.name == prefill.category },
         )
 }

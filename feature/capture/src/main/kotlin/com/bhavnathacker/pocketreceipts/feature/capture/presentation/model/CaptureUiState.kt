@@ -13,13 +13,13 @@ enum class CaptureStatus {
     /** The document scanner is open (or about to open); the screen stays blank. */
     Scanning,
 
-    /** The scanned image is being read. */
+    /** The scanned image's text is being recognized and the receipt reader is reading its fields. */
     Reading,
 
     /** The scanner can't run on this device. */
     Unavailable,
 
-    /** Reading the scanned image failed. */
+    /** Recognizing the text or reading the receipt's fields failed. */
     ReadFailed,
 }
 
@@ -27,7 +27,7 @@ enum class CaptureStatus {
  * The capture screen.
  *
  * @property scanAttempt Increases on every retry, so the scanner is launched once per attempt.
- * @property scannedEvent The scan was read; carries its candidate values.
+ * @property scannedEvent The scan was read; carries the values read from it.
  * @property closeEvent The user cancelled; the capture flow should close.
  */
 @Stable

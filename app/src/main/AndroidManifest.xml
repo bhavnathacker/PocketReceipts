@@ -2,16 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!--
-        ML Kit's usage-log upload backend (transport-backend-cct) declares INTERNET.
-        Only :data:model-download may add INTERNET, so it is removed here.
-        verifyInternetPermissionSources accepts the backend's declaration only
-        because of this removal. Never delete it.
-    -->
-    <uses-permission
-        android:name="android.permission.INTERNET"
-        tools:node="remove" />
-
     <application
         android:name=".PocketReceiptsApplication"
         android:allowBackup="true"
@@ -38,10 +28,12 @@
         <!--
             Switches off ML Kit's usage logging: without this backend registration,
             the data-transport runtime drops ML Kit's usage events on the device.
-            ML Kit still needs the backend's classes, so the library stays.
-            verifyNoUsageLoggingBackend fails if the registration comes back.
-            Never delete this. (Lint can't see the service class: it is only on the
-            runtime classpath, through ML Kit.)
+            ML Kit still needs the backend's classes, so the library stays, and its
+            INTERNET declaration merges with the one :data:model-download adds for
+            the model download. verifyInternetPermissionSources accepts that
+            declaration only because of this removal, and verifyNoUsageLoggingBackend
+            fails if the registration comes back. Never delete this. (Lint can't see
+            the service class: it is only on the runtime classpath, through ML Kit.)
         -->
         <service
             android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"

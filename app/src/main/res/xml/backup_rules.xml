@@ -4,8 +4,10 @@
     See https://developer.android.com/identity/data/autobackup
 
     Receipt data never leaves the phone, so the receipts database is never
-    backed up.
+    backed up. The on-device model (2.6 GB, in app-specific external storage)
+    is excluded too: it is downloaded again on a new phone.
 -->
 <full-backup-content>
     <exclude domain="database" path="." />
+    <exclude domain="external" path="models/" />
 </full-backup-content>

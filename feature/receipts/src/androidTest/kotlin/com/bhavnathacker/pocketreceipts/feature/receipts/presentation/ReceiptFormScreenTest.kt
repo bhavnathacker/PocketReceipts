@@ -6,7 +6,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -16,9 +15,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
-import com.bhavnathacker.pocketreceipts.domain.receipt.Money
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
-import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.MoneyFormatter
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model.ReceiptFormUiState
 import com.google.common.truth.Truth.assertThat
@@ -210,12 +207,8 @@ class ReceiptFormScreenTest {
         amount = "210.00",
         currencyCode = "GBP",
         purchaseDate = LocalDate.of(2026, 2, 3),
-        dateCandidates = listOf(LocalDate.of(2026, 2, 3), LocalDate.of(2026, 1, 30)),
-        totalCandidates = listOf(Money(21000, "GBP"), Money(20000, "GBP")),
+        category = ReceiptCategory.SHOPPING,
     )
-
-    private var pickedDate: LocalDate? = null
-    private var pickedTotal: Money? = null
 
     private fun setReviewScreen(uiState: ReceiptFormUiState = reviewForm) {
         composeRule.setContent {
@@ -230,14 +223,10 @@ class ReceiptFormScreenTest {
                     onDateChange = {},
                     onCategoryChange = {},
                     onNoteChange = {},
-                    onDateCandidateClick = { pickedDate = it },
-                    onTotalCandidateClick = { pickedTotal = it },
                 )
             }
         }
     }
-
-    private fun totalLabel(money: Money) = MoneyFormatter()(money, Locale.getDefault())
 
     private fun dateLabel(date: LocalDate) =
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()).format(date)
@@ -250,42 +239,32 @@ class ReceiptFormScreenTest {
     }
 
     @Test
-    fun test_that_the_total_in_the_form_is_the_selected_candidate() {
+    fun test_that_a_scanned_receipt_form_shows_the_scanned_merchant() {
         setReviewScreen()
 
-        composeRule.onNodeWithContentDescription("Use total ${totalLabel(Money(21000, "GBP"))}").assertIsSelected()
+        composeRule.onNode(hasSetTextAction() and hasText("Corner Shop")).assertIsDisplayed()
     }
 
     @Test
-    fun test_that_tapping_a_total_candidate_reports_it() {
+    fun test_that_a_scanned_receipt_form_shows_the_scanned_total() {
         setReviewScreen()
 
-        composeRule.onNodeWithContentDescription("Use total ${totalLabel(Money(20000, "GBP"))}").performClick()
-
-        assertThat(pickedTotal).isEqualTo(Money(20000, "GBP"))
+        composeRule.onNode(hasSetTextAction() and hasText("210.00")).assertIsDisplayed()
+        composeRule.onNodeWithText("GBP").assertIsDisplayed()
     }
 
     @Test
-    fun test_that_the_date_in_the_form_is_the_selected_candidate() {
+    fun test_that_a_scanned_receipt_form_shows_the_scanned_date() {
         setReviewScreen()
 
-        composeRule.onNodeWithContentDescription("Use date ${dateLabel(LocalDate.of(2026, 2, 3))}").assertIsSelected()
+        composeRule.onNodeWithText(dateLabel(LocalDate.of(2026, 2, 3))).assertIsDisplayed()
     }
 
     @Test
-    fun test_that_tapping_a_date_candidate_reports_it() {
+    fun test_that_a_scanned_receipt_form_shows_the_scanned_category() {
         setReviewScreen()
 
-        composeRule.onNodeWithContentDescription("Use date ${dateLabel(LocalDate.of(2026, 1, 30))}").performClick()
-
-        assertThat(pickedDate).isEqualTo(LocalDate.of(2026, 1, 30))
-    }
-
-    @Test
-    fun test_that_a_manual_form_shows_no_candidates() {
-        setScreen(emptyForm)
-
-        composeRule.onNodeWithContentDescription("Use total", substring = true).assertDoesNotExist()
+        composeRule.onNodeWithText("Shopping").assertIsDisplayed()
     }
 
     @Test

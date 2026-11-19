@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -28,7 +27,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -52,8 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -63,11 +59,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bhavnathacker.pocketreceipts.core.ui.icon.AppIcons
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
-import com.bhavnathacker.pocketreceipts.domain.receipt.Money
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
-import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.AmountInputFormatter
-import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.MoneyFormatter
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.ReceiptCategoryLabelMapper
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model.ReceiptFormUiState
 import de.palm.composestateevents.EventEffect
@@ -109,16 +102,13 @@ internal fun ReceiptFormRoute(
         onDateChange = viewModel::onDateChange,
         onCategoryChange = viewModel::onCategoryChange,
         onNoteChange = viewModel::onNoteChange,
-        onDateCandidateClick = viewModel::onDateCandidateClick,
-        onTotalCandidateClick = viewModel::onTotalCandidateClick,
         onNothingRecognizedEventConsumed = viewModel::onNothingRecognizedEventConsumed,
     )
 }
 
 /**
  * The form for adding a receipt by hand, editing one, or reviewing a scanned
- * one. When reviewing, the other dates and totals found on the scan are offered
- * as chips under their fields.
+ * one prefilled with the values read from it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,8 +123,6 @@ internal fun ReceiptFormScreen(
     onCategoryChange: (ReceiptCategory) -> Unit,
     onNoteChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onDateCandidateClick: (LocalDate) -> Unit = {},
-    onTotalCandidateClick: (Money) -> Unit = {},
     onNothingRecognizedEventConsumed: () -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
@@ -230,14 +218,6 @@ internal fun ReceiptFormScreen(
                     modifier = Modifier.width(120.dp),
                 )
             }
-            if (uiState.totalCandidates.isNotEmpty()) {
-                TotalCandidates(
-                    candidates = uiState.totalCandidates,
-                    amount = uiState.amount,
-                    currencyCode = uiState.currencyCode,
-                    onClick = onTotalCandidateClick,
-                )
-            }
             ReadOnlyField(
                 value = rememberDateText(uiState.purchaseDate),
                 label = stringResource(R.string.receipt_form_date),
@@ -253,13 +233,6 @@ internal fun ReceiptFormScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (uiState.dateCandidates.isNotEmpty()) {
-                DateCandidates(
-                    candidates = uiState.dateCandidates,
-                    selected = uiState.purchaseDate,
-                    onClick = onDateCandidateClick,
-                )
-            }
             CategoryField(category = uiState.category, onCategoryChange = onCategoryChange)
             OutlinedTextField(
                 value = uiState.note,
@@ -293,68 +266,6 @@ internal fun ReceiptFormScreen(
             },
             onDismiss = { showCurrencyPicker = false },
         )
-    }
-}
-
-/**
- * The totals found on a scanned receipt; the one in the form is selected.
- */
-@Composable
-private fun TotalCandidates(
-    candidates: List<Money>,
-    amount: String,
-    currencyCode: String,
-    onClick: (Money) -> Unit,
-) {
-    val locale = LocalConfiguration.current.locales[0]
-    val moneyFormatter = remember { MoneyFormatter() }
-    val amountInputFormatter = remember { AmountInputFormatter() }
-    CandidateRow {
-        candidates.forEach { money ->
-            val label = remember(money, locale) { moneyFormatter(money, locale) }
-            val description = stringResource(R.string.receipt_form_use_total, label)
-            FilterChip(
-                selected = money.currencyCode == currencyCode && amountInputFormatter(money, locale) == amount,
-                onClick = { onClick(money) },
-                label = { Text(label) },
-                modifier = Modifier.semantics { contentDescription = description },
-            )
-        }
-    }
-}
-
-/**
- * The dates found on a scanned receipt; the one in the form is selected.
- */
-@Composable
-private fun DateCandidates(
-    candidates: List<LocalDate>,
-    selected: LocalDate,
-    onClick: (LocalDate) -> Unit,
-) {
-    CandidateRow {
-        candidates.forEach { date ->
-            val label = rememberDateText(date)
-            val description = stringResource(R.string.receipt_form_use_date, label)
-            FilterChip(
-                selected = date == selected,
-                onClick = { onClick(date) },
-                label = { Text(label) },
-                modifier = Modifier.semantics { contentDescription = description },
-            )
-        }
-    }
-}
-
-@Composable
-private fun CandidateRow(content: @Composable () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        content()
     }
 }
 
@@ -541,8 +452,6 @@ private fun ReceiptFormScreenReviewPreview() {
                 amount = "210.00",
                 currencyCode = "INR",
                 purchaseDate = LocalDate.of(2026, 3, 2),
-                dateCandidates = listOf(LocalDate.of(2026, 3, 2), LocalDate.of(2026, 2, 28)),
-                totalCandidates = listOf(Money(21000, "INR"), Money(20000, "INR"), Money(12000, "INR")),
             ),
             onClose = {},
             onSave = {},

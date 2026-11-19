@@ -11,13 +11,12 @@ import kotlin.math.abs
  * Lines whose vertical centres lie within half the median line height of a row,
  * and whose text is of similar size, join that row, left to right, separated by
  * a space. Text much larger than its neighbours (a shop's name printed beside its
- * address) stays on a row of its own. Rows are returned top to bottom, each with
- * the height of its tallest text.
+ * address) stays on a row of its own. Rows are returned top to bottom.
  */
 internal class OcrRowAssembler @Inject constructor() {
 
     operator fun invoke(lines: List<OcrLine>): RecognizedText {
-        if (lines.isEmpty()) return RecognizedText(emptyList(), emptyList())
+        if (lines.isEmpty()) return RecognizedText(emptyList())
         val tolerance = lines.map { it.height }.sorted()[lines.size / 2] / 2f
         val rows = mutableListOf<MutableList<OcrLine>>()
         lines.sortedBy { it.centerY }.forEach { line ->
@@ -30,7 +29,6 @@ internal class OcrRowAssembler @Inject constructor() {
         val ordered = rows.sortedBy { row -> row.minOf { it.top } }
         return RecognizedText(
             lines = ordered.map { row -> row.sortedBy { it.left }.joinToString(" ") { it.text } },
-            heights = ordered.map { row -> row.maxOf { it.height } },
         )
     }
 

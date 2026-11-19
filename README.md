@@ -4,11 +4,12 @@
 
 An Android app for keeping your receipts in your pocket.
 
-> 🚧 Early development. You can scan receipts or add them by hand, and view, edit and delete them. On-device AI and Ask are next.
+> 🚧 Early development. You can scan receipts or add them by hand, and view, edit and delete them. Receipts are read by Gemma, an AI model that runs on your phone. Ask is next.
 
 ## Features
 
-- **Scan receipts**: tap **Scan receipt** to photograph a paper receipt (or pick one from your gallery). Its text is read on your phone, and the review form opens prefilled with the merchant, date, total (the amount actually paid, such as the net amount, rather than a gross total) and a category suggested from the shop's name (for example "Men's Wear" → Shopping, "Sai Medicals" → Health); tap a chip to switch to another date or total it found, then save. Scanning works offline once the scanner is installed, and needs Google Play services: Play services installs the scanner on first use. Without it, you can still add receipts by hand. The scanned image is deleted as soon as it has been read, and is never stored with the receipt.
+- **Receipt reader setup**: on first launch the app downloads Gemma 4 E2B (2.6 GB, once), an AI model that runs on your phone, and checks the download before using it. The app can't be used until it is set up: the setup screen shows the download's progress and offers Retry when there's no connection, not enough storage, or the download fails. Phones that can't run the model (typically under about 6 GB of RAM) can't use the app.
+- **Scan receipts**: tap **Scan receipt** to photograph a paper receipt (or pick one from your gallery). ML Kit reads its text on your phone, Gemma reads the merchant, date, total (the amount actually paid, such as the net amount, rather than a gross total), currency and category from that text, and the review form opens prefilled with them. Edit anything that's wrong, then save. Reading takes a few seconds and works offline. Scanning needs Google Play services, which installs the scanner on first use; without it, you can still add receipts by hand. The scanned image is deleted as soon as its text has been read, and is never stored with the receipt.
 - **Receipts**: a list of your receipts, newest first. Add one by hand with merchant, date, total, currency and category, plus an optional note. Open a receipt to edit or delete it.
 - **Exact amounts in any currency**: each receipt keeps its own ISO 4217 currency (new ones default to your phone's). Totals are stored as whole minor units (cents, paise...), so nothing is rounded. Amounts are entered and shown in your locale's format, for example `₹1,23,456.50` in India.
 
@@ -54,7 +55,7 @@ Or from the command line:
                       :domain   (pure Kotlin: models, use cases, interfaces)
                           ^
    +----------------------+----------------------+
- :data:receipts   :data:ocr   :data:ai   :data:model-download (only module with network access)
+ :data:receipts   :data:ocr   :data:ai (Gemma via LiteRT-LM)   :data:model-download (only module with network access)
 
  shared: :core:ui (theme, components, icons)  :core:test  :core:ui-test
 ```
@@ -76,8 +77,8 @@ Pocket Receipts keeps your spending data on your phone. The build enforces this:
 |---|---|---|
 | HTTP client confinement | `verifyNoHttpClient` (every module) | No HTTP client library (OkHttp, Retrofit, Ktor, ...) on any module's compile classpath, except `:data:model-download`, which downloads the on-device AI model. |
 | No tracking SDKs | `:app:verifyNoTrackingSdks` | No analytics, advertising or crash-reporting SDK (Firebase Analytics/Crashlytics, Sentry, ...) anywhere in the app. |
-| INTERNET permission confinement | `:app:verifyInternetPermissionSources` | Only `:data:model-download` may add `android.permission.INTERNET`: not `:app`, not another module, not a third-party library. The one exception is ML Kit's usage-log uploader, whose permission is accepted only because the app manifest removes it. |
-| No usage-log uploads | `:app:verifyNoUsageLoggingBackend` | No usage-logging upload backend may be registered in the merged manifest. ML Kit (scanning and text recognition) needs Google's `transport-backend-cct` classes, so the library stays, but `app/src/main/AndroidManifest.xml` removes its backend registration and INTERNET permission. ML Kit's usage events are then dropped on the phone. |
+| INTERNET permission confinement | `:app:verifyInternetPermissionSources` | Only `:data:model-download` may add `android.permission.INTERNET` (the model download uses Android's `DownloadManager`): not `:app`, not another module, not a third-party library. The one exception is ML Kit's usage-log uploader, whose permission is accepted only because the app manifest removes its upload backend's registration, so it has no way to send anything. |
+| No usage-log uploads | `:app:verifyNoUsageLoggingBackend` | No usage-logging upload backend may be registered in the merged manifest. ML Kit (scanning and text recognition) needs Google's `transport-backend-cct` classes, so the library stays, but `app/src/main/AndroidManifest.xml` removes its backend registration. ML Kit's usage events are then dropped on the phone. |
 
 Run them all with:
 
@@ -85,9 +86,9 @@ Run them all with:
 ./gradlew check
 ```
 
-Receipt scans are read on the phone by ML Kit's bundled text recognizer, and the scanned image is deleted right after it has been read.
+The model download is the only network request the app makes, and it sends no receipt data. Receipt scans are read on the phone: ML Kit's bundled text recognizer reads the text, and Gemma, run with LiteRT-LM, reads the receipt's fields from it. The scanned image is deleted right after its text has been read.
 
-Receipts are also kept out of backups: the receipts database is excluded from cloud backup and device-to-device transfer (`app/src/main/res/xml/backup_rules.xml`, `data_extraction_rules.xml`), so receipts stay on this phone.
+Receipts are also kept out of backups: the receipts database is excluded from cloud backup and device-to-device transfer (`app/src/main/res/xml/backup_rules.xml`, `data_extraction_rules.xml`), so receipts stay on this phone. The model file (app-specific external storage, `models/`) is excluded too, and is removed when the app is uninstalled.
 
 ## License
 
