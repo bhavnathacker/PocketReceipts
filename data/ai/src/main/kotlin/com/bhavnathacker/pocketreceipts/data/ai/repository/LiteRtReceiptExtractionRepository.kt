@@ -8,12 +8,17 @@ import com.bhavnathacker.pocketreceipts.domain.scan.ExtractedReceipt
 import com.bhavnathacker.pocketreceipts.domain.scan.ReceiptExtractionRepository
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.SamplerConfig
+import timber.log.Timber
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.time.TimeSource
 
 /**
  * Asks the on-device model for a receipt's fields in one turn, with greedy
  * sampling (the same text always gives the same answer) and a short reply limit.
+ *
+ * The model stays loaded between receipts ([LiteRtModelRuntime]), but every receipt
+ * gets a new conversation, so nothing from one receipt reaches the next.
  */
 internal class LiteRtReceiptExtractionRepository @Inject constructor(
     private val modelRepository: ModelRepository,
@@ -31,7 +36,11 @@ internal class LiteRtReceiptExtractionRepository @Inject constructor(
                     samplerConfig = SamplerConfig(topK = 1, topP = 1.0, temperature = 0.0),
                     maxOutputToken = MAX_OUTPUT_TOKENS,
                 ),
-            ).use { conversation -> conversation.sendMessage(prompt).toString() }
+            ).use { conversation ->
+                val start = TimeSource.Monotonic.markNow()
+                conversation.sendMessage(prompt).toString()
+                    .also { Timber.d("Receipt read in %s", start.elapsedNow()) }
+            }
         }
         return replyParser(reply)
     }

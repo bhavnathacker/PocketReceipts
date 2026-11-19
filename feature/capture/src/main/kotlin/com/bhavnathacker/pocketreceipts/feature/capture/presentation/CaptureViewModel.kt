@@ -2,6 +2,7 @@ package com.bhavnathacker.pocketreceipts.feature.capture.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bhavnathacker.pocketreceipts.domain.scan.KeepReceiptReaderReadyUseCase
 import com.bhavnathacker.pocketreceipts.domain.scan.ScanReceiptUseCase
 import com.bhavnathacker.pocketreceipts.feature.capture.presentation.model.CaptureStatus
 import com.bhavnathacker.pocketreceipts.feature.capture.presentation.model.CaptureUiState
@@ -21,16 +22,25 @@ import javax.inject.Inject
 /**
  * Reads the image the document scanner returns and reports the scan, or why
  * there is none. Scanned images are deleted by [ScanReceiptUseCase].
+ *
+ * For as long as it exists (from opening the scanner until the scan is read or the
+ * user cancels) it keeps the receipt reader loaded, so the model loads while the user
+ * is still in the scanner and the scan is read without waiting for it.
  */
 @HiltViewModel
 internal class CaptureViewModel @Inject constructor(
     private val scanReceiptUseCase: ScanReceiptUseCase,
+    keepReceiptReaderReadyUseCase: KeepReceiptReaderReadyUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CaptureUiState())
     val uiState: StateFlow<CaptureUiState> = _uiState.asStateFlow()
 
     private var readingJob: Job? = null
+
+    init {
+        viewModelScope.launch { keepReceiptReaderReadyUseCase() }
+    }
 
     fun onImageScanned(imageUri: String) {
         _uiState.update { it.copy(status = CaptureStatus.Reading) }
