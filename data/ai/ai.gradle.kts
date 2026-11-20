@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(project(":domain"))
+    implementation(libs.androidx.lifecycle.process)
     implementation(libs.litertlm.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.timber)

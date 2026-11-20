@@ -1,6 +1,8 @@
 package com.bhavnathacker.pocketreceipts.feature.capture.presentation
 
 import com.bhavnathacker.pocketreceipts.core.test.extension.CoroutineMainDispatcherExtension
+import androidx.lifecycle.ViewModelStore
+import com.bhavnathacker.pocketreceipts.domain.scan.KeepReceiptReaderReadyUseCase
 import com.bhavnathacker.pocketreceipts.domain.scan.ReceiptScan
 import com.bhavnathacker.pocketreceipts.domain.scan.ScanReceiptUseCase
 import com.bhavnathacker.pocketreceipts.feature.capture.presentation.model.CaptureStatus
@@ -18,6 +20,7 @@ import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.stub
+import org.mockito.kotlin.verify
 import java.io.IOException
 
 @ExtendWith(CoroutineMainDispatcherExtension::class)
@@ -25,16 +28,63 @@ class CaptureViewModelTest {
     private lateinit var underTest: CaptureViewModel
 
     private val scanReceiptUseCase = mock<ScanReceiptUseCase>()
+    private val keepReceiptReaderReadyUseCase = mock<KeepReceiptReaderReadyUseCase>()
 
     private val scan = ReceiptScan(merchant = "Corner Shop")
 
     @AfterEach
     fun tearDown() {
-        reset(scanReceiptUseCase)
+        reset(scanReceiptUseCase, keepReceiptReaderReadyUseCase)
     }
 
     private fun initViewModel() {
-        underTest = CaptureViewModel(scanReceiptUseCase = scanReceiptUseCase)
+        underTest = CaptureViewModel(
+            scanReceiptUseCase = scanReceiptUseCase,
+            keepReceiptReaderReadyUseCase = keepReceiptReaderReadyUseCase,
+        )
+    }
+
+    private fun stubKeepReady(answer: suspend () -> Unit) {
+        keepReceiptReaderReadyUseCase.stub { onBlocking { invoke() } doSuspendableAnswer { answer() } }
+    }
+
+    @Test
+    fun `test that init keeps the receipt reader ready`() = runTest {
+        stubKeepReady { awaitCancellation() }
+
+        initViewModel()
+
+        verify(keepReceiptReaderReadyUseCase).invoke()
+    }
+
+    @Test
+    fun `test that the receipt reader is no longer kept ready when the ViewModel is cleared`() = runTest {
+        var cancelled = false
+        stubKeepReady {
+            try {
+                awaitCancellation()
+            } finally {
+                cancelled = true
+            }
+        }
+        initViewModel()
+        val store = ViewModelStore()
+        store.put("capture", underTest)
+
+        store.clear()
+
+        assertThat(cancelled).isTrue()
+    }
+
+    @Test
+    fun `test that onImageScanned fires scannedEvent when the receipt reader couldn't be kept ready`() = runTest {
+        stubKeepReady { }
+        stubScan { scan }
+        initViewModel()
+
+        underTest.onImageScanned(IMAGE_URI)
+
+        assertThat(underTest.uiState.value.scannedEvent).isEqualTo(StateEventWithContentTriggered(scan))
     }
 
     private fun stubScan(answer: suspend () -> ReceiptScan) {
