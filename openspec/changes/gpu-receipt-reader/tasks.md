@@ -18,8 +18,8 @@
 ## 4. Real devices
 
 - [x] 4.1 On the emulator (no OpenCL), install the app with the model present and open the scanner. Verify from the debug log that the model loads on the CPU, with no GPU or WebGPU attempt, in about the same time as before.
-- [ ] 4.2 On the owner's phone (`ANDROID_SERIAL=b6fff6b1`, the owner scans), scan the same receipt twice in a row, then once more after the model has been released. Verify from the debug log that the model loads on the GPU, record the load and read times against the CPU numbers in the proposal, check the values are correct, and record the app's memory while the model is loaded (`dumpsys meminfo com.bhavnathacker.pocketreceipts`). Record the results in the PR.
-- [ ] 4.3 After 4.1 and 4.2, run the `:app` connected tests on the emulator (they uninstall the app and delete the model). Verify they pass.
+- [x] 4.2 On the owner's phone (`ANDROID_SERIAL=b6fff6b1`, the owner scans), scan the same receipt twice in a row, then once more after the model has been released. Verify from the debug log that the model loads on the GPU, record the load and read times against the CPU numbers in the proposal, check the values are correct, and record the app's memory while the model is loaded (`dumpsys meminfo com.bhavnathacker.pocketreceipts`). Record the results in the PR.
+- [x] 4.3 After 4.1 and 4.2, run the `:app` connected tests on the emulator (they uninstall the app and delete the model). Verify they pass.
 
 ## Workflow follow-up
 
