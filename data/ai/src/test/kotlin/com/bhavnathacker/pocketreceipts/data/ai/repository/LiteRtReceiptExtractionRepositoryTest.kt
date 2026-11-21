@@ -2,6 +2,7 @@ package com.bhavnathacker.pocketreceipts.data.ai.repository
 
 import com.bhavnathacker.pocketreceipts.data.ai.AppVisibility
 import com.bhavnathacker.pocketreceipts.data.ai.EngineFactory
+import com.bhavnathacker.pocketreceipts.data.ai.GpuSupport
 import com.bhavnathacker.pocketreceipts.data.ai.LiteRtModelRuntime
 import com.bhavnathacker.pocketreceipts.data.ai.ReceiptPromptBuilder
 import com.bhavnathacker.pocketreceipts.data.ai.ReceiptReplyParser
@@ -42,7 +43,7 @@ class LiteRtReceiptExtractionRepositoryTest {
             Message.model("{}")
     }.also { conversations += it }
 
-    private val engineFactory = EngineFactory {
+    private val engineFactory = EngineFactory { _, _ ->
         mock<Engine> {
             on { createConversation(any()) } doAnswer { newConversation() }
         }.also { engines += it }
@@ -60,6 +61,9 @@ class LiteRtReceiptExtractionRepositoryTest {
     fun `test that extract reads each receipt in a new conversation on the same engine`() = runTest {
         val runtime = LiteRtModelRuntime(
             engineFactory = engineFactory,
+            gpuSupport = object : GpuSupport {
+                override val isAvailable = false
+            },
             appVisibility = object : AppVisibility {
                 override val isInForeground = MutableStateFlow(true)
             },

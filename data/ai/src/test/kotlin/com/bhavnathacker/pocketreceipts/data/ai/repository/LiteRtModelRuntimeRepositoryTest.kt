@@ -2,6 +2,7 @@ package com.bhavnathacker.pocketreceipts.data.ai.repository
 
 import com.bhavnathacker.pocketreceipts.data.ai.AppVisibility
 import com.bhavnathacker.pocketreceipts.data.ai.EngineFactory
+import com.bhavnathacker.pocketreceipts.data.ai.GpuSupport
 import com.bhavnathacker.pocketreceipts.data.ai.LiteRtModelRuntime
 import com.google.ai.edge.litertlm.Engine
 import com.google.common.truth.Truth.assertThat
@@ -27,9 +28,12 @@ class LiteRtModelRuntimeRepositoryTest {
 
     private fun TestScope.createRepository(): LiteRtModelRuntimeRepository {
         val runtime = LiteRtModelRuntime(
-            engineFactory = EngineFactory {
+            engineFactory = EngineFactory { _, _ ->
                 loadFailure?.let { throw it }
                 mock<Engine>().also { engines += it }
+            },
+            gpuSupport = object : GpuSupport {
+                override val isAvailable = false
             },
             appVisibility = object : AppVisibility {
                 override val isInForeground = MutableStateFlow(true)

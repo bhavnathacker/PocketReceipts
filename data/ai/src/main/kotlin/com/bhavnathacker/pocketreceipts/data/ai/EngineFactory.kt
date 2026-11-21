@@ -7,24 +7,34 @@ import com.google.ai.edge.litertlm.EngineConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
+/** The processor the model runs on. */
+internal enum class ReaderBackend { GPU, CPU }
+
 /** Creates a LiteRT-LM [Engine] with the model loaded. A blocking call: run it on the inference thread. */
 internal fun interface EngineFactory {
 
-    /** Creates an engine for the model at [modelPath] and initializes it; throws if it can't be loaded. */
-    fun create(modelPath: String): Engine
+    /**
+     * Creates an engine for the model at [modelPath] on [backend] and initializes it;
+     * throws if it can't be loaded.
+     */
+    fun create(modelPath: String, backend: ReaderBackend): Engine
 }
 
 /**
- * Creates engines on the CPU backend: it behaves the same on every phone. (The GPU
- * backend falls back to WebGPU on phones without OpenCL, where it can run for
- * minutes before failing.)
+ * Creates engines on the GPU or the CPU backend. Which one to use is decided by
+ * [LiteRtModelRuntime]: the GPU only where [GpuSupport] finds OpenCL. The `cacheDir` keeps
+ * the GPU's prepared programs, so only the first GPU load on a phone is slow.
  */
 internal class LiteRtEngineFactory @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : EngineFactory {
 
-    override fun create(modelPath: String): Engine {
-        val engine = Engine(EngineConfig(modelPath = modelPath, backend = Backend.CPU(), cacheDir = context.cacheDir.path))
+    override fun create(modelPath: String, backend: ReaderBackend): Engine {
+        val liteRtBackend = when (backend) {
+            ReaderBackend.GPU -> Backend.GPU()
+            ReaderBackend.CPU -> Backend.CPU()
+        }
+        val engine = Engine(EngineConfig(modelPath = modelPath, backend = liteRtBackend, cacheDir = context.cacheDir.path))
         try {
             engine.initialize()
         } catch (t: Throwable) {

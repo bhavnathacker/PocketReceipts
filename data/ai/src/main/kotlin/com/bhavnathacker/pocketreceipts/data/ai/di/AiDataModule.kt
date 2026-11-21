@@ -2,8 +2,10 @@ package com.bhavnathacker.pocketreceipts.data.ai.di
 
 import com.bhavnathacker.pocketreceipts.data.ai.AppVisibility
 import com.bhavnathacker.pocketreceipts.data.ai.EngineFactory
+import com.bhavnathacker.pocketreceipts.data.ai.GpuSupport
 import com.bhavnathacker.pocketreceipts.data.ai.InferenceDispatcher
 import com.bhavnathacker.pocketreceipts.data.ai.LiteRtEngineFactory
+import com.bhavnathacker.pocketreceipts.data.ai.OpenClGpuSupport
 import com.bhavnathacker.pocketreceipts.data.ai.ProcessAppVisibility
 import com.bhavnathacker.pocketreceipts.data.ai.repository.LiteRtModelRuntimeRepository
 import com.bhavnathacker.pocketreceipts.data.ai.repository.LiteRtReceiptExtractionRepository
@@ -33,6 +35,9 @@ internal abstract class AiDataModule {
 
     @Binds
     abstract fun bindEngineFactory(factory: LiteRtEngineFactory): EngineFactory
+
+    @Binds
+    abstract fun bindGpuSupport(support: OpenClGpuSupport): GpuSupport
 
     @Binds
     abstract fun bindAppVisibility(visibility: ProcessAppVisibility): AppVisibility
