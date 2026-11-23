@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.bhavnathacker.pocketreceipts.core.ui.R as CoreUiR
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model.ReceiptDetailUiModel
@@ -31,7 +32,7 @@ class ReceiptDetailScreenTest {
             merchant = "Corner Shop",
             date = "3 Mar 2026",
             total = "£4.50",
-            categoryLabel = R.string.category_groceries,
+            categoryLabel = CoreUiR.string.category_groceries,
             note = "milk",
         ),
     )

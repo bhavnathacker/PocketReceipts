@@ -1,5 +1,8 @@
 package com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper
 
+import com.bhavnathacker.pocketreceipts.core.ui.R as CoreUiR
+import com.bhavnathacker.pocketreceipts.core.ui.format.MoneyFormatter
+import com.bhavnathacker.pocketreceipts.core.ui.format.ReceiptCategoryLabelMapper
 import com.bhavnathacker.pocketreceipts.domain.receipt.Money
 import com.bhavnathacker.pocketreceipts.domain.receipt.Receipt
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
@@ -51,7 +54,7 @@ class ReceiptListItemUiMapperTest {
     fun `test that a receipt maps to a list item`() {
         whenever(moneyFormatter(receipt.total, locale)).thenReturn("₹1,23,456.50")
         whenever(receiptDateFormatter(receipt.purchaseDate, locale)).thenReturn("3 Mar 2026")
-        whenever(receiptCategoryLabelMapper(ReceiptCategory.GROCERIES)).thenReturn(R.string.category_groceries)
+        whenever(receiptCategoryLabelMapper(ReceiptCategory.GROCERIES)).thenReturn(CoreUiR.string.category_groceries)
 
         val result = underTest(receipt, locale)
 
@@ -61,7 +64,7 @@ class ReceiptListItemUiMapperTest {
                 merchant = "Corner Shop",
                 date = "3 Mar 2026",
                 total = "₹1,23,456.50",
-                categoryLabel = R.string.category_groceries,
+                categoryLabel = CoreUiR.string.category_groceries,
             ),
         )
     }
@@ -70,7 +73,7 @@ class ReceiptListItemUiMapperTest {
     fun `test that a receipt list maps to list items in order`() {
         whenever(moneyFormatter(any(), any())).thenReturn("")
         whenever(receiptDateFormatter(any(), any())).thenReturn("")
-        whenever(receiptCategoryLabelMapper(any())).thenReturn(R.string.category_other)
+        whenever(receiptCategoryLabelMapper(any())).thenReturn(CoreUiR.string.category_other)
 
         val result = underTest(listOf(receipt.copy(id = 2), receipt.copy(id = 1)), locale)
 

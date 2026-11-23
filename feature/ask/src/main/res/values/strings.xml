@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ask_title">Ask</string>
+
+    <string name="ask_question_label">Ask about your spending</string>
+    <string name="ask_action">Ask</string>
+    <string name="ask_examples_title">Try asking</string>
+    <string name="ask_example_groceries_october">How much did I spend on groceries in October?</string>
+    <string name="ask_example_total_2025">How much is my total spend in 2025?</string>
+    <string name="ask_example_shopping_quarter">How much did I spend on shopping this quarter?</string>
+    <string name="ask_example_last_month">How much did I spend last month?</string>
+    <string name="ask_answering">Reading your question…</string>
+
+    <string name="ask_all_spending">All spending</string>
+    <string name="ask_all_time">All time</string>
+    <plurals name="ask_receipt_count">
+        <item quantity="one">%d receipt</item>
+        <item quantity="other">%d receipts</item>
+    </plurals>
+    <string name="ask_nothing_spent">No receipts found for this category and period.</string>
+    <string name="ask_unanswerable">I can only answer how much you spent in a category and time period, such as the questions below.</string>
+    <string name="ask_error">Couldn\'t answer the question. Try again.</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper
+package com.bhavnathacker.pocketreceipts.core.ui.format
 
 import android.icu.text.NumberFormat
 import android.icu.util.Currency
@@ -14,7 +14,7 @@ import javax.inject.Inject
  * Uses Android's ICU formatter rather than `java.text.NumberFormat`, which
  * can't do Indian (lakh/crore) digit grouping.
  */
-internal class MoneyFormatter @Inject constructor() {
+class MoneyFormatter @Inject constructor() {
 
     operator fun invoke(money: Money, locale: Locale = Locale.getDefault()): String {
         val fractionDigits = java.util.Currency.getInstance(money.currencyCode)

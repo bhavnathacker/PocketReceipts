@@ -1,13 +1,18 @@
 package com.bhavnathacker.pocketreceipts.data.receipts.repository
 
 import com.bhavnathacker.pocketreceipts.data.receipts.database.ReceiptDao
+import com.bhavnathacker.pocketreceipts.data.receipts.mapper.ReceiptCategoryMapper
 import com.bhavnathacker.pocketreceipts.data.receipts.mapper.ReceiptEntityMapper
+import com.bhavnathacker.pocketreceipts.domain.receipt.Money
 import com.bhavnathacker.pocketreceipts.domain.receipt.Receipt
+import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptInput
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptRepository
+import com.bhavnathacker.pocketreceipts.domain.spending.SpendingTotal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Clock
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,6 +21,7 @@ import javax.inject.Singleton
 internal class DefaultReceiptRepository @Inject constructor(
     private val receiptDao: ReceiptDao,
     private val receiptEntityMapper: ReceiptEntityMapper,
+    private val receiptCategoryMapper: ReceiptCategoryMapper,
     private val clock: Clock,
 ) : ReceiptRepository {
 
@@ -38,4 +44,15 @@ internal class DefaultReceiptRepository @Inject constructor(
     override suspend fun deleteReceipt(id: Long) {
         receiptDao.deleteById(id)
     }
+
+    override suspend fun spendingTotals(
+        from: LocalDate?,
+        to: LocalDate?,
+        category: ReceiptCategory?,
+    ): List<SpendingTotal> =
+        receiptDao.currencyTotals(
+            fromEpochDay = from?.toEpochDay() ?: Long.MIN_VALUE,
+            toEpochDay = to?.toEpochDay() ?: Long.MAX_VALUE,
+            category = category?.let { receiptCategoryMapper(it) },
+        ).map { SpendingTotal(Money(it.totalMinor, it.currencyCode), it.receiptCount) }
 }

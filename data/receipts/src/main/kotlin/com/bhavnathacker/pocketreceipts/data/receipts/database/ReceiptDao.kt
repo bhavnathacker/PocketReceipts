@@ -30,4 +30,21 @@ internal interface ReceiptDao {
 
     @Query("DELETE FROM receipts WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    /**
+     * The totals of the receipts dated [fromEpochDay] to [toEpochDay] (both included) and, unless
+     * [category] is `null`, with that category key: one row per currency, the currency with the
+     * most receipts first, then by currency code. SQLite adds integers exactly.
+     */
+    @Query(
+        """
+        SELECT currency_code, SUM(total_minor) AS total_minor, COUNT(*) AS receipt_count
+        FROM receipts
+        WHERE purchase_date BETWEEN :fromEpochDay AND :toEpochDay
+            AND (:category IS NULL OR category = :category)
+        GROUP BY currency_code
+        ORDER BY receipt_count DESC, currency_code
+        """,
+    )
+    suspend fun currencyTotals(fromEpochDay: Long, toEpochDay: Long, category: String?): List<CurrencyTotalRow>
 }

@@ -1,7 +1,5 @@
-package com.bhavnathacker.pocketreceipts.domain.scan
+package com.bhavnathacker.pocketreceipts.domain.ai
 
-import com.bhavnathacker.pocketreceipts.domain.ai.ModelRepository
-import com.bhavnathacker.pocketreceipts.domain.ai.ModelRuntimeRepository
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
@@ -21,8 +19,8 @@ import org.mockito.kotlin.verify
 import java.io.IOException
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class KeepReceiptReaderReadyUseCaseTest {
-    private lateinit var underTest: KeepReceiptReaderReadyUseCase
+class KeepModelReadyUseCaseTest {
+    private lateinit var underTest: KeepModelReadyUseCase
 
     private val modelRepository = mock<ModelRepository>()
     private val modelRuntimeRepository = mock<ModelRuntimeRepository>()
@@ -31,7 +29,7 @@ class KeepReceiptReaderReadyUseCaseTest {
 
     @BeforeAll
     fun setUp() {
-        underTest = KeepReceiptReaderReadyUseCase(
+        underTest = KeepModelReadyUseCase(
             modelRepository = modelRepository,
             modelRuntimeRepository = modelRuntimeRepository,
         )

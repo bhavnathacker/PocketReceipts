@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.bhavnathacker.pocketreceipts.core.ui.R as CoreUiR
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model.ReceiptListItemUiModel
@@ -39,7 +40,7 @@ class ReceiptListScreenTest {
     }
 
     private val cornerShop = ReceiptListUiState.Receipts(
-        listOf(ReceiptListItemUiModel(7, "Corner Shop", "3 Mar 2026", "₹1,23,456.50", R.string.category_groceries)),
+        listOf(ReceiptListItemUiModel(7, "Corner Shop", "3 Mar 2026", "₹1,23,456.50", CoreUiR.string.category_groceries)),
     )
 
     @Test
@@ -84,8 +85,8 @@ class ReceiptListScreenTest {
         setScreen(
             ReceiptListUiState.Receipts(
                 listOf(
-                    ReceiptListItemUiModel(7, "Corner Shop", "3 Mar 2026", "€4.50", R.string.category_groceries),
-                    ReceiptListItemUiModel(8, "Ramen Ya", "2 Mar 2026", "¥1,500", R.string.category_dining),
+                    ReceiptListItemUiModel(7, "Corner Shop", "3 Mar 2026", "€4.50", CoreUiR.string.category_groceries),
+                    ReceiptListItemUiModel(8, "Ramen Ya", "2 Mar 2026", "¥1,500", CoreUiR.string.category_dining),
                 ),
             ),
         )

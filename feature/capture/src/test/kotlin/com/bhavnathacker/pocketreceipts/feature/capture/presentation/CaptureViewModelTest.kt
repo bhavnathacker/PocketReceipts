@@ -2,7 +2,7 @@ package com.bhavnathacker.pocketreceipts.feature.capture.presentation
 
 import com.bhavnathacker.pocketreceipts.core.test.extension.CoroutineMainDispatcherExtension
 import androidx.lifecycle.ViewModelStore
-import com.bhavnathacker.pocketreceipts.domain.scan.KeepReceiptReaderReadyUseCase
+import com.bhavnathacker.pocketreceipts.domain.ai.KeepModelReadyUseCase
 import com.bhavnathacker.pocketreceipts.domain.scan.ReceiptScan
 import com.bhavnathacker.pocketreceipts.domain.scan.ScanReceiptUseCase
 import com.bhavnathacker.pocketreceipts.feature.capture.presentation.model.CaptureStatus
@@ -28,24 +28,24 @@ class CaptureViewModelTest {
     private lateinit var underTest: CaptureViewModel
 
     private val scanReceiptUseCase = mock<ScanReceiptUseCase>()
-    private val keepReceiptReaderReadyUseCase = mock<KeepReceiptReaderReadyUseCase>()
+    private val keepModelReadyUseCase = mock<KeepModelReadyUseCase>()
 
     private val scan = ReceiptScan(merchant = "Corner Shop")
 
     @AfterEach
     fun tearDown() {
-        reset(scanReceiptUseCase, keepReceiptReaderReadyUseCase)
+        reset(scanReceiptUseCase, keepModelReadyUseCase)
     }
 
     private fun initViewModel() {
         underTest = CaptureViewModel(
             scanReceiptUseCase = scanReceiptUseCase,
-            keepReceiptReaderReadyUseCase = keepReceiptReaderReadyUseCase,
+            keepModelReadyUseCase = keepModelReadyUseCase,
         )
     }
 
     private fun stubKeepReady(answer: suspend () -> Unit) {
-        keepReceiptReaderReadyUseCase.stub { onBlocking { invoke() } doSuspendableAnswer { answer() } }
+        keepModelReadyUseCase.stub { onBlocking { invoke() } doSuspendableAnswer { answer() } }
     }
 
     @Test
@@ -54,7 +54,7 @@ class CaptureViewModelTest {
 
         initViewModel()
 
-        verify(keepReceiptReaderReadyUseCase).invoke()
+        verify(keepModelReadyUseCase).invoke()
     }
 
     @Test

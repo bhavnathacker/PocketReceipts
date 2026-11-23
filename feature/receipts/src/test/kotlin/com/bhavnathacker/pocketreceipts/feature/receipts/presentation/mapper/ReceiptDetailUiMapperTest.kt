@@ -1,5 +1,8 @@
 package com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper
 
+import com.bhavnathacker.pocketreceipts.core.ui.R as CoreUiR
+import com.bhavnathacker.pocketreceipts.core.ui.format.MoneyFormatter
+import com.bhavnathacker.pocketreceipts.core.ui.format.ReceiptCategoryLabelMapper
 import com.bhavnathacker.pocketreceipts.domain.receipt.Money
 import com.bhavnathacker.pocketreceipts.domain.receipt.Receipt
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
@@ -41,7 +44,7 @@ class ReceiptDetailUiMapperTest {
         )
         whenever(moneyFormatter(receipt.total, locale)).thenReturn("£4.50")
         whenever(receiptDateFormatter(receipt.purchaseDate, locale)).thenReturn("3 Mar 2026")
-        whenever(receiptCategoryLabelMapper(ReceiptCategory.GROCERIES)).thenReturn(R.string.category_groceries)
+        whenever(receiptCategoryLabelMapper(ReceiptCategory.GROCERIES)).thenReturn(CoreUiR.string.category_groceries)
     }
 
     @AfterEach
@@ -56,7 +59,7 @@ class ReceiptDetailUiMapperTest {
                 merchant = "Corner Shop",
                 date = "3 Mar 2026",
                 total = "£4.50",
-                categoryLabel = R.string.category_groceries,
+                categoryLabel = CoreUiR.string.category_groceries,
                 note = "milk",
             ),
         )

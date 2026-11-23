@@ -9,8 +9,10 @@ import com.bhavnathacker.pocketreceipts.data.ai.OpenClGpuSupport
 import com.bhavnathacker.pocketreceipts.data.ai.ProcessAppVisibility
 import com.bhavnathacker.pocketreceipts.data.ai.repository.LiteRtModelRuntimeRepository
 import com.bhavnathacker.pocketreceipts.data.ai.repository.LiteRtReceiptExtractionRepository
+import com.bhavnathacker.pocketreceipts.data.ai.repository.LiteRtSpendingQuestionRepository
 import com.bhavnathacker.pocketreceipts.domain.ai.ModelRuntimeRepository
 import com.bhavnathacker.pocketreceipts.domain.scan.ReceiptExtractionRepository
+import com.bhavnathacker.pocketreceipts.domain.spending.SpendingQuestionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -29,6 +31,11 @@ internal abstract class AiDataModule {
     abstract fun bindReceiptExtractionRepository(
         repository: LiteRtReceiptExtractionRepository,
     ): ReceiptExtractionRepository
+
+    @Binds
+    abstract fun bindSpendingQuestionRepository(
+        repository: LiteRtSpendingQuestionRepository,
+    ): SpendingQuestionRepository
 
     @Binds
     abstract fun bindModelRuntimeRepository(repository: LiteRtModelRuntimeRepository): ModelRuntimeRepository
