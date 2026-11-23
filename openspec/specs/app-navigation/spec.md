@@ -7,7 +7,7 @@ Defines the app's top-level navigation shell: which top-level destinations exist
 ## Requirements
 
 ### Requirement: Top-level destinations
-The app SHALL provide three top-level destinations, Receipts, Ask and Settings, each with an icon and a text label. Once the on-device model is ready, the app SHALL open on Receipts. Until then it SHALL open on model setup, which shows no navigation UI.
+The app SHALL provide two top-level destinations, Receipts and Ask, each with an icon and a text label. Once the on-device model is ready, the app SHALL open on Receipts. Until then it SHALL open on model setup, which shows no navigation UI.
 
 #### Scenario: App launch
 - **WHEN** the model is ready and the user launches the app
@@ -23,7 +23,7 @@ The app SHALL provide three top-level destinations, Receipts, Ask and Settings, 
 
 #### Scenario: Destinations listed
 - **WHEN** the navigation UI is visible
-- **THEN** it shows Receipts, Ask and Settings, in that order, each with an icon and a label
+- **THEN** it shows Receipts and Ask, in that order, each with an icon and a label, and no Settings destination
 
 ### Requirement: Switching destinations
 Selecting a top-level destination SHALL show that destination and mark it as selected. Selecting the destination that is already selected SHALL NOT add another copy of it to the navigation history.
@@ -51,11 +51,11 @@ The app SHALL show top-level navigation as a bottom navigation bar in compact-wi
 - **WHEN** the window width changes between compact and medium while the app is open
 - **THEN** the navigation UI switches form and the selected destination stays the same
 
-### Requirement: Back navigation between top-level destinations
-Back from any top-level destination other than Receipts SHALL return to Receipts. Back from Receipts SHALL leave the app. The app SHALL support predictive back.
+### Requirement: Back navigation to Receipts
+Back from Ask SHALL return to Receipts. Back from Receipts SHALL leave the app. The app SHALL support predictive back.
 
-#### Scenario: Back from Ask or Settings
-- **WHEN** the user is on Ask or Settings and presses or swipes back
+#### Scenario: Back from Ask
+- **WHEN** the user is on Ask and presses or swipes back
 - **THEN** Receipts is shown and marked as selected
 
 #### Scenario: Back from Receipts
@@ -63,15 +63,15 @@ Back from any top-level destination other than Receipts SHALL return to Receipts
 - **THEN** the app closes to the previous screen or launcher
 
 #### Scenario: Predictive back preview
-- **WHEN** the user starts a back swipe from Ask or Settings
+- **WHEN** the user starts a back swipe from Ask
 - **THEN** the system shows a preview of the destination back will lead to
 
 ### Requirement: Navigation state survives configuration changes
 The selected top-level destination SHALL survive configuration changes and process recreation.
 
 #### Scenario: Device rotated
-- **WHEN** the user is on Settings and rotates the device
-- **THEN** Settings is still shown and selected after rotation
+- **WHEN** the user is on Ask and rotates the device
+- **THEN** Ask is still shown and selected after rotation
 
 #### Scenario: Process recreated
 - **WHEN** the system kills the app in the background while Ask is shown and the user returns to it
@@ -87,21 +87,6 @@ The app SHALL draw edge-to-edge behind the system bars, and no interactive eleme
 #### Scenario: Three-button navigation
 - **WHEN** the device uses three-button navigation
 - **THEN** no navigation item or content is covered by the system navigation bar
-
-### Requirement: Placeholder destination content
-Until its feature is delivered, the Settings destination SHALL show a screen headed with the destination's name. The Receipts destination SHALL show the user's receipts, and the Ask destination SHALL show spending questions.
-
-#### Scenario: Placeholder shown
-- **WHEN** the user opens Settings before the Settings feature exists
-- **THEN** a screen headed "Settings" is shown
-
-#### Scenario: Receipts is not a placeholder
-- **WHEN** the user opens Receipts
-- **THEN** the receipt list (or its empty state) is shown
-
-#### Scenario: Ask is not a placeholder
-- **WHEN** the user opens Ask
-- **THEN** the question field and example questions are shown
 
 ### Requirement: Screens within a top-level destination
 A destination MAY open further screens (for example a receipt's detail or form) on top of itself. While such a screen is shown, its top-level destination SHALL stay selected. Back SHALL return to the screen beneath it. Selecting a different top-level destination SHALL leave the nested screens.
