@@ -4,7 +4,9 @@
 
 An Android app for keeping your receipts in your pocket.
 
-> 🚧 Early development. You can scan receipts or add them by hand, and view, edit and delete them. Receipts are read by Gemma, an AI model that runs on your phone, and you can ask how much you spent. The app has two tabs: Receipts and Ask.
+Scan a paper receipt or add one by hand, then ask how much you spent, all on your phone. Receipts are read and questions are answered by **Gemma 4 E2B**, an AI model that runs **on the device** with LiteRT-LM. No receipt, photo or question ever leaves the phone.
+
+The app has two tabs: **Receipts** and **Ask**.
 
 ## Features
 
@@ -14,11 +16,73 @@ An Android app for keeping your receipts in your pocket.
 - **Ask about your spending**: type a question such as "How much did I spend on groceries in October?", "How much is my total spend in 2025?" or "How much did I spend on shopping this quarter?", or tap one of the examples. Gemma reads only the category and the period from your question (a month, a quarter, a year, a date range or all time); the app then adds up the matching receipts exactly, on your phone. The answer shows the category and dates it used, the total and the number of receipts, with one total per currency (amounts are never converted). Questions about anything else, such as shops, averages or the biggest purchase, get a "can't answer" message. Gemma starts loading when you open Ask, so it's ready by the time you've typed. Questions and answers aren't stored.
 - **Exact amounts in any currency**: each receipt keeps its own ISO 4217 currency (new ones default to your phone's). Totals are stored as whole minor units (cents, paise...), so nothing is rounded. Amounts are entered and shown in your locale's format, for example `₹1,23,456.50` in India.
 
+## How it works
+
+**Scanning a receipt**
+
+```
+ML Kit document scanner ─► ML Kit text recognition ─► OcrRowAssembler ─► Gemma (LiteRT-LM)
+   (photo, crop)             (on-device, bundled)      (rebuilds rows)    (JSON: merchant, date,
+                                                                            total, currency, category)
+        │                                                                           │
+        └── image deleted as soon as its text is read          ReceiptFieldsChecker ◄┘
+                                                               (drops invalid values)
+                                                                           │
+                                                             review form, prefilled ─► Room
+```
+
+**Asking a question**
+
+```
+"How much did I spend on groceries in October?"
+        │
+        ▼
+Gemma ─► {"category": "GROCERIES", "period": {"type": "month", "year": null, "month": 10}}
+        │
+        ▼
+SpendingQueryChecker ─► Groceries, 2026-10-01 … 2026-10-31   (rejects anything it can't check)
+        │
+        ▼
+SQL: SUM(total_minor) GROUP BY currency ─► "Groceries · 1 – 31 Oct 2026 · ₹2,450.00 · 7 receipts"
+```
+
+Gemma only turns text into structured data. Every value it returns is checked in the domain layer before it is used, and it never does arithmetic: totals are exact integer sums done by the database.
+
+**Running the model**
+
+- `LiteRtModelRuntime` owns one shared engine, which scanning and Ask both use, with all inference on a single dedicated thread.
+- The engine runs on the GPU where OpenCL is available (on a Snapdragon 8+ Gen 1 phone, a warm read took about 5.5 s instead of 13 s) and on the CPU otherwise. If the GPU fails to load the model or to read, the runtime switches to the CPU for the rest of the session.
+- The model is loaded ahead of use, while the scanner or Ask is open. It is released 2 minutes after its last use, or at once when the app goes to the background, to give its memory (about 1 GB) back.
+
+## Design decisions
+
+- **On-device AI only.** Receipts are personal financial data, so the app runs Gemma on the phone and the build forbids network clients outside the model download (see [Privacy guarantees](#privacy-guarantees)).
+- **The model's output is never trusted.** Its replies are parsed leniently and then validated (`ReceiptFieldsChecker`, `SpendingQueryChecker`). An invalid value is dropped and the field is left at its default; nothing is guessed. The receipt form always lets the user correct the values before saving.
+- **Exact money.** Amounts are `Long` minor units with an ISO 4217 code (`Money`). They are never floating point, and are formatted with ICU for the user's locale, including Indian lakh/crore grouping.
+- **Clean architecture with enforced boundaries.** Features and data modules depend only on `:domain`; `verifyModuleDependencies` fails the build otherwise.
+- **Spec-driven development.** Behaviour is specified in [`openspec/specs`](openspec/specs) with testable scenarios. Every change went through a proposal, design and task list ([`openspec/changes/archive`](openspec/changes/archive)) before implementation, and was reviewed as a pull request.
+
+## Known limitations
+
+- The model needs a phone with roughly 6 GB of RAM or more, and a one-time 2.6 GB download.
+- Ask answers totals by category and period only. There are no questions about merchants, averages or comparisons, and no currency conversion.
+- Reading quality depends on the photo and on Gemma. The review form is there so the user can fix values before saving.
+- The UI is in English only.
+- R8 optimization is switched off for release builds (`app/build.gradle.kts`): keep rules for LiteRT-LM and ML Kit haven't been written and tested yet.
+
 ## Tech stack
 
-- **Kotlin** with **Jetpack Compose** and **Material 3**
-- Android Gradle Plugin 9, Gradle version catalog (`gradle/libs.versions.toml`)
-- Min SDK 26 · Target SDK 37
+| Area | Libraries |
+|---|---|
+| Language and UI | Kotlin 2.4, Jetpack Compose (Material 3, adaptive navigation suite), edge-to-edge |
+| Architecture | Clean architecture, multi-module, MVVM with `StateFlow`, Hilt (with assisted injection), Navigation 3 |
+| Data | Room (exported schemas), kotlinx.serialization, Coroutines and Flow |
+| On-device AI | Gemma 4 E2B via LiteRT-LM 0.19 (GPU/OpenCL or CPU), ML Kit Document Scanner and Text Recognition |
+| Model delivery | Android `DownloadManager`, SHA-256 verification |
+| Testing | JUnit 5, Mockito-Kotlin, Turbine, Truth, Compose UI tests, Hilt testing, in-memory Room |
+| Build | AGP 9, convention plugins in `build-logic`, version catalog, configuration cache, Kover coverage, GitHub Actions CI |
+
+Min SDK 26 · Target SDK 37.
 
 ## Getting started
 
@@ -26,6 +90,7 @@ An Android app for keeping your receipts in your pocket.
 
 - A recent version of [Android Studio](https://developer.android.com/studio)
 - Android SDK 37 (Android Studio will prompt you to install it)
+- To use the app: a phone or emulator with Google Play services (for the document scanner), about 3 GB of free storage, and roughly 6 GB of RAM or more for the model. The first launch downloads the model.
 
 ### Build and run
 
@@ -41,8 +106,19 @@ Or from the command line:
 ```bash
 ./gradlew assembleDebug      # build the debug APK
 ./gradlew installDebug       # install on a connected device/emulator
-./gradlew test               # run unit tests
 ```
+
+## Testing
+
+```bash
+./gradlew check                    # unit tests, lint, module-dependency and privacy checks (what CI runs)
+./gradlew -p build-logic test      # convention plugin and privacy rule tests
+./gradlew connectedAndroidTest     # instrumented and Compose UI tests, needs a device or emulator
+./gradlew koverHtmlReport          # coverage report in build/reports/kover
+```
+
+- **Unit tests (JVM)** cover use cases, checkers, ViewModels, mappers, prompt builders and reply parsers, the model runtime (with a fake engine factory), and the model download repository.
+- **Instrumented tests** cover the Room DAO, ICU formatting (money, date ranges), every screen (Compose UI tests), and the app shell with Hilt, including navigation, model setup gating and configuration changes. The app tests replace the model download with `FakeModelRepository`, so they never download or load the 2.6 GB model.
 
 ## Modules
 
@@ -87,7 +163,7 @@ Run them all with:
 ./gradlew check
 ```
 
-The model download is the only network request the app makes, and it sends no receipt data. Receipt scans are read on the phone: ML Kit's bundled text recognizer reads the text, and Gemma, run with LiteRT-LM, reads the receipt's fields from it. The scanned image is deleted right after its text has been read.
+The model download is the only network request the app makes, and it sends no receipt data. Receipt scans are read on the phone: ML Kit's bundled text recognizer reads the text, and Gemma, run with LiteRT-LM, reads the receipt's fields from it. The scanned image is deleted right after its text has been read. Ask's questions are read by the same on-device model, and are never stored or logged.
 
 Receipts are also kept out of backups: the receipts database is excluded from cloud backup and device-to-device transfer (`app/src/main/res/xml/backup_rules.xml`, `data_extraction_rules.xml`), so receipts stay on this phone. The model file (app-specific external storage, `models/`) is excluded too, and is removed when the app is uninstalled.
 

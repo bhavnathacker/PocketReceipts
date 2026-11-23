@@ -104,14 +104,21 @@ internal class DefaultModelRepository @Inject constructor(
             }
             DownloadStatus.Successful -> {
                 onProgress(ModelState.Verifying)
-                if (verify(partialFile)) {
-                    partialFile.renameTo(modelFile)
-                    store.downloadId = null
-                    store.loadVerified = false
-                    ModelState.Loading
-                } else {
-                    fail(id, SetupFailure.CORRUPT)
-                    ModelState.Failed(ModelFailure.CORRUPT)
+                when {
+                    !verify(partialFile) -> {
+                        fail(id, SetupFailure.CORRUPT)
+                        ModelState.Failed(ModelFailure.CORRUPT)
+                    }
+                    // The verified file only counts as downloaded under its final name.
+                    !partialFile.renameTo(modelFile) -> {
+                        fail(id, SetupFailure.DOWNLOAD_FAILED)
+                        checkNotNull(failureState())
+                    }
+                    else -> {
+                        store.downloadId = null
+                        store.loadVerified = false
+                        ModelState.Loading
+                    }
                 }
             }
         }

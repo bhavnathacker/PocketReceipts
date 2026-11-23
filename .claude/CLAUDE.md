@@ -5,8 +5,10 @@
 ```bash
 ./gradlew assembleDebug                 # build debug APK
 ./gradlew installDebug                  # install on connected device/emulator
-./gradlew test                          # JVM unit tests (app/src/test)
-./gradlew connectedAndroidTest          # instrumented + Compose UI tests (app/src/androidTest), needs a device
+./gradlew test                          # JVM unit tests, all modules
+./gradlew check                         # unit tests, lint, module-dependency and privacy checks (what CI runs)
+./gradlew connectedAndroidTest          # instrumented + Compose UI tests, all modules, needs a device
+./gradlew -p build-logic test           # convention plugin and privacy rule tests
 ./gradlew lint                          # Android lint
 
 # Single test class / method
@@ -32,270 +34,142 @@
 
 ## Project Structure & Architecture
 
-### Clean Architecture Principles
-- **Three-Layer Architecture**: Strict separation between presentation, domain, and data layers
-- **Dependency Flow**: Feature (presentation) and data modules both depend on the domain module; domain depends on neither. Features never depend on data modules or on other features. `:app` is the composition root and wires data implementations via Hilt. `verifyModuleDependencies` (part of `./gradlew check`) enforces this.
-- **Module Organization**: Features organized into separate modules (app, data, domain, core, feature, etc.)
+### Clean Architecture
+- **Three layers**: presentation (`:feature:*`), domain (`:domain`, pure Kotlin) and data (`:data:*`).
+- **Dependency flow**: feature and data modules depend on `:domain`; `:domain` depends on neither. Features never depend on data modules or on other features. `:app` is the composition root and binds data implementations to domain interfaces with Hilt. `verifyModuleDependencies` (part of `./gradlew check`) enforces this. `:core:*` modules may depend on `:domain`.
 
-### Module Structure
-- **App Module**: Main application module with `@HiltAndroidApp` annotation
-- **Domain Module**: Business logic, use cases, and repository interfaces
-- **Data Module**: Repository implementations, data sources, and mappers
-- **Feature Modules**: Self-contained feature modules
-- **Core Modules**: Shared utilities, UI components, and common functionality
-
-## File Organization & Naming Conventions
+### Modules
+| Module | Contents |
+|---|---|
+| `:app` | `@HiltAndroidApp`, `MainActivity`, `ModelSetupGate` wiring, the Navigation 3 shell (`PocketReceiptsApp`, `TopLevelDestination`: Receipts and Ask) |
+| `:domain` | Models, repository interfaces, use cases, checkers (`ReceiptValidator`, `ReceiptFieldsChecker`, `SpendingQueryChecker`) |
+| `:feature:receipts` | Receipt list, detail and add/edit/review form |
+| `:feature:capture` | ML Kit document scanner flow; reads the scan with `ScanReceiptUseCase` |
+| `:feature:ask` | Spending questions: question field, examples, answer |
+| `:feature:modelsetup` | Model download/verify/load setup screen (`ModelSetupGate`) |
+| `:data:receipts` | Room database, DAO, mappers, `DefaultReceiptRepository` |
+| `:data:ocr` | ML Kit text recognition, scan image deletion |
+| `:data:ai` | Gemma via LiteRT-LM: shared `LiteRtModelRuntime`, receipt and question prompts and reply parsers |
+| `:data:model-download` | `DownloadManager` download and SHA-256 check of the model; the only module with network access |
+| `:core:ui` | Theme, `AppIcons`, `MoneyFormatter`, `ReceiptCategoryLabelMapper` and category strings |
+| `:core:test`, `:core:ui-test` | `CoroutineMainDispatcherExtension`; Compose test host |
 
 ### File Structure
-- **Module Structure**: Each module follows consistent internal structure
-  ```
-  feature/capture/
-  ├── src/main/kotlin/com/bhavnathacker/pocketreceipts/feature/capture/
-  │   └── presentation/   # ViewModels, UI state, screens, UI mappers
-  └── capture.gradle.kts
-  data/receipts/
-  ├── src/main/kotlin/com/bhavnathacker/pocketreceipts/data/receipts/
-  │   └── ...             # Repository implementations, data sources, Room, mappers
-  └── receipts.gradle.kts
-  data/ocr/               # ML Kit text recognition and scan image deletion
-  └── ocr.gradle.kts
-  ```
+```
+feature/ask/
+├── src/main/kotlin/com/bhavnathacker/pocketreceipts/feature/ask/presentation/
+│   ├── AskViewModel.kt, AskScreen.kt, AskNavigation.kt
+│   ├── model/          # UI state and UI models
+│   └── mapper/         # domain → UI mappers
+└── ask.gradle.kts
+data/receipts/
+├── src/main/kotlin/com/bhavnathacker/pocketreceipts/data/receipts/
+│   ├── database/       # Room database, entities, DAO
+│   ├── mapper/         # entity ↔ domain mappers
+│   ├── repository/     # DefaultReceiptRepository
+│   └── di/             # Hilt bindings
+├── schemas/            # exported Room schemas (committed)
+└── receipts.gradle.kts
+```
 
-### Naming Conventions
-- **Classes**: Use PascalCase for class names
-  - ViewModels: `{Feature}ViewModel` (e.g., `GlobalStateViewModel`)
-  - Use Cases: `{Action}UseCase` (e.g., `LoginUseCase`)
-  - Repositories: `Default{Feature}Repository` (e.g., `DefaultAccountRepository`)
-  - Mappers: `{Source}Mapper` (e.g., `TransferMapper`)
-
-- **Files**: Use descriptive file names
-  - Test files: `{ClassName}Test.kt`
-  - Module files: `{module-name}.gradle.kts`
-
-- **Packages**: Follow reverse domain naming
-  - `com.bhavnathacker.pocketreceipts.feature.{feature}.{layer}`
-  - `com.bhavnathacker.pocketreceipts.domain.{domain}`
-  - `com.bhavnathacker.pocketreceipts.data.{data-type}`
-
-### Build File Naming
-- **Module Build Files**: Use module name as build file name
-  - `app/app.gradle.kts`
-  - `feature/home/home.gradle.kts`
-  - `core/ui-components/ui-components.gradle.kts`
+## Naming Conventions
+- **ViewModels**: `{Feature}ViewModel` (e.g. `AskViewModel`, `ReceiptFormViewModel`)
+- **Use cases**: `{Action}UseCase` (e.g. `AnswerSpendingQuestionUseCase`, `SaveReceiptUseCase`)
+- **Repositories**: interfaces `{Thing}Repository` in `:domain`; implementations `Default{Thing}Repository`, or named after their technology (`LiteRtSpendingQuestionRepository`, `MlKitTextRecognitionRepository`)
+- **Mappers**: `{Source}{Target}Mapper` or `{Thing}UiMapper` (e.g. `ReceiptEntityMapper`, `SpendingAnswerUiMapper`)
+- **Tests**: `{ClassName}Test.kt`
+- **Packages**: `com.bhavnathacker.pocketreceipts.feature.{feature}.presentation`, `...domain.{area}`, `...data.{module}`
+- **Build files**: named after the module (`feature/ask/ask.gradle.kts`, `data/model-download/model-download.gradle.kts`); only `:app` uses `app/build.gradle.kts`
 
 ## Code Organization Patterns
 
-### Dependency Injection with Hilt  
-- **ViewModels**: See [viewmodel-conventions.md](.claude/skills/viewmodel/viewmodel-conventions.md) for ViewModel conventions (Hilt, StateFlow, use case injection).
-- **Activities**: Use `@AndroidEntryPoint`
-- **Modules**: Create `@Module` classes with `@InstallIn(SingletonComponent::class)`
-  ```kotlin
-  @Module 
-  @InstallIn(SingletonComponent::class)
-  class DatabaseHandlerModule {
-      @Singleton
-      @Provides
-      fun provideDbHandler(): DatabaseHandler = ...
-  }
-  ```
-- **Entry Points**: Use `@EntryPoint` for non-Android classes that need injection
+### Dependency Injection with Hilt
+- **ViewModels**: see [viewmodel-conventions.md](skills/viewmodel/viewmodel-conventions.md) (`@HiltViewModel`, private `MutableStateFlow` exposed as `StateFlow`, use cases and mappers only, never repositories). Navigation arguments use assisted injection (`ReceiptFormViewModel.Factory`).
+- **Activities**: `@AndroidEntryPoint`.
+- **Modules**: `@Module @InstallIn(SingletonComponent::class)`, with `@Binds` for interface bindings (e.g. `AiDataModule`). Data implementations are `internal`.
+- **Dispatchers**: inject `@IoDispatcher` / `@DefaultDispatcher` (`:domain`), and `@InferenceDispatcher` (the single LiteRT-LM thread) in `:data:ai`; never hard-code `Dispatchers.IO`.
 
 ### Repository Pattern
-- **Interfaces**: Define repository interfaces in domain layer
-  ```kotlin
-  interface AccountRepository {
-      suspend fun getAccountInfo(): AccountInfo
-      fun monitorAccountBlocked(): Flow<AccountBlocked>
-  }
-  ```
-- **Implementations**: Implement repositories in data layer
-  ```kotlin
-  @Singleton
-  class DefaultAccountRepository @Inject constructor(
-      private val accountDataSource: AccountDataSource
-  ) : AccountRepository {
-      override suspend fun getAccountInfo(): AccountInfo = ...
-  }
-  ```
-- **Gateway Pattern**: Use gateway interfaces to abstract SDK access
-- **Facade Pattern**: Implement facades for complex SDK interactions
+- Interfaces live in `:domain` (e.g. `ReceiptRepository`, `SpendingQuestionRepository`, `ModelRepository`); implementations live in data modules and wrap one SDK or store each (Room, ML Kit, LiteRT-LM, `DownloadManager`).
+- One-shot calls are `suspend`; changing data is a `Flow` (`monitorReceipts()`).
 
 ### Use Case Pattern
-- **Single Responsibility**: Each use case handles one business operation
+- One business operation per use case, `@Inject constructor`, `operator fun invoke`, depending on repository interfaces and other domain classes:
   ```kotlin
-  class LoginUseCase @Inject constructor(
-      private val loginRepository: LoginRepository,
-      private val chatLogoutUseCase: ChatLogoutUseCase
+  class AnswerSpendingQuestionUseCase @Inject constructor(
+      private val spendingQuestionRepository: SpendingQuestionRepository,
+      private val spendingQueryChecker: SpendingQueryChecker,
+      private val receiptRepository: ReceiptRepository,
+      private val getToday: GetTodayUseCase,
   ) {
-      suspend operator fun invoke(email: String, password: String): Flow<LoginStatus> = ...
+      suspend operator fun invoke(question: String): SpendingAnswer = ...
   }
   ```
-- **Constructor Injection**: Use `@Inject` constructor for dependencies
-- **Repository Dependencies**: Use cases depend on repository interfaces, not implementations
-- **Flow Returns**: Use cases return `Flow` or `StateFlow` for reactive programming
-- **Use Cases**: See [usecase-conventions.md](.claude/skills/usecase/usecase-conventions.md) for UseCase conventions.
+- `suspend` for one-shot operations, `Flow` for streams. See [usecase-conventions.md](skills/usecase/usecase-conventions.md).
+
+### Model output is never trusted
+- Gemma's replies are parsed leniently in `:data:ai` and then validated in `:domain` (`ReceiptFieldsChecker`, `SpendingQueryChecker`). Invalid values are dropped, never guessed. Gemma never computes amounts: Ask's totals are summed in SQL.
 
 ### State Management
-- See [viewmodel-conventions.md](.claude/skills/viewmodel/viewmodel-conventions.md) for ViewModel state management conventions.
-
-## Build Configuration
-
-### Version Catalog
-- **Centralized Dependencies**: Use the single version catalog `gradle/libs.versions.toml` for all library, plugin, and test dependency versions
-
-### Build Types
-- **Debug**: Development builds with debugging enabled
-- **Release**: Production builds with minification and obfuscation
+- See [viewmodel-conventions.md](skills/viewmodel/viewmodel-conventions.md): a single `uiState: StateFlow`, updated with `_uiState.update { }`; one-shot events with `StateEvent`/`StateEventWithContent` from `compose-state-events`.
 
 ## Testing Patterns
 
 ### Unit Testing
-- **JUnit 5**: Use JUnit 5 for all unit tests
+- **JUnit 5** (`@TestInstance(PER_CLASS)` for stateless classes, `@ExtendWith(CoroutineMainDispatcherExtension::class)` for ViewModels), **Mockito-Kotlin**, **Turbine** for flows, **Google Truth** for assertions, `runTest` for coroutines.
   ```kotlin
   @ExtendWith(CoroutineMainDispatcherExtension::class)
-  class BaseViewModelTest {
+  class AskViewModelTest {
       @Test
-      fun `test that state updates correctly`() = runTest {
-          // Test implementation
-      }
+      fun `test that onAsk shows the mapped answer`() = runTest { ... }
   }
   ```
-- **Mockito**: Use Mockito for mocking dependencies
-  ```kotlin
-  private val mockUseCase = mock<MonitorAccountBlockedUseCase>()
-  whenever(mockUseCase()).thenReturn(flowOf(AccountBlocked(false)))
-  ```
-- **Turbine**: Use Turbine for testing Flow emissions, for example UiState
-  ```kotlin
-  underTest.uiState.test {
-      val state = awaitItem()
-      assertThat(state.accountBlockedEvent).isNull()
-  }
-  ```
-- **Truth**: Use Google Truth for assertions
-- **Coroutines**: Use `runTest` for coroutine testing
+- Classes that use Android's ICU (`MoneyFormatter`, `DateRangeFormatter`) are tested on a device (`androidTest`), because the JVM doesn't have it.
 
 ### Test Method Naming
-- **Format**: Use one of the following patterns for test method names:
-  - `test that <method> <action>`() — e.g. `test that init does not call loginToFolderUseCase`()
-  - `test that <method> <action> when <cause>`() — e.g. `test that init emits Loaded when login succeeds`()
+- `test that <method> <action>`() — e.g. `test that onShown keeps the model ready`()
+- `test that <method> <action> when <cause>`() — e.g. `test that invoke returns Unanswerable when the question is unsupported`()
+- Instrumented tests (JUnit 4) use the same words with underscores: `test_that_ask_is_disabled_while_the_question_is_blank`.
 
 ### Test Structure
-- **Repository Tests**: Test repository implementations with mocked dependencies
-- **Use Case Tests**: See [usecase-test-conventions.md](.claude/skills/usecase/usecase-test-conventions.md) for UseCase test conventions.
-- **ViewModel Tests**: See [viewmodel-test-conventions.md](.claude/skills/viewmodel/viewmodel-test-conventions.md) for ViewModel test conventions.
-- **Mapper Tests**: See [mapper-test-conventions.md](.claude/skills/mapper/mapper-test-conventions.md) for Mapper test conventions.
-
-### Test Modules
-- **Core Test**: Shared test utilities and extensions
-- **Core UI Test**: UI testing utilities and components
-- **Test App Module**: Hilt test modules for dependency injection
+- **Use case tests**: [usecase-test-conventions.md](skills/usecase/usecase-test-conventions.md)
+- **ViewModel tests**: [viewmodel-test-conventions.md](skills/viewmodel/viewmodel-test-conventions.md)
+- **Mapper tests**: [mapper-test-conventions.md](skills/mapper/mapper-test-conventions.md)
+- **Repository tests**: mocked DAOs or fake engines (`EngineFactory { _, _ -> ... }`); DAO queries are tested on an in-memory Room database (`ReceiptDaoTest`).
+- **Screens**: stateless composables tested with `createComposeRule()` in each feature module; the app shell with `@HiltAndroidTest` in `:app`, where `FakeModelRepository` replaces the model download (its `modelPath()` is `null`, so the model is never loaded).
 
 ## Data Layer Patterns
 
 ### Mappers
-- See [mapper-conventions.md](.claude/skills/mapper/mapper-conventions.md) for Mapper conventions.
-- **Entity Mappers**: Convert between domain entities and data entities
-  ```kotlin
-  internal class TransferMapper @Inject constructor(
-      private val transferAppDataMapper: TransferAppDataMapper,
-      private val transferTypeMapper: TransferTypeMapper
-  ) {
-      operator fun invoke(transfer: TransferEntity): Transfer = Transfer(
-          uniqueId = transfer.uniqueId,
-          transferType = transferTypeMapper(transfer.type, appData),
-          // ... other mappings
-      )
-  }
-  ```
-- **Model Mappers**: Convert between different data representations
-- **Null Safety**: Handle null values appropriately in mappers
+- See [mapper-conventions.md](skills/mapper/mapper-conventions.md): `internal class` with `@Inject constructor` and `operator fun invoke`, one responsibility each (e.g. `ReceiptEntityMapper`, `ReceiptCategoryMapper`, which maps categories to stable database keys).
 
 ### Database
 - **Room**: Use Room for local database operations. Apply the `pocketreceipts.android.room` convention plugin (Room Gradle plugin + KSP); it exports schemas to `<module>/schemas` (e.g. `data/receipts/schemas`). Commit schema JSON files and bump the version with a migration for every schema change.
 - **No encryption**: The receipts database is a plain Room database (no SQLCipher), provided as a Hilt singleton. DAO methods are `suspend` or return `Flow`, so Room opens it off the main thread.
 - **Backups**: The `database` domain is excluded from cloud backup and device transfer. Keep it that way: receipt data never leaves the phone.
-- **Entities**: Define Room entities for data persistence
-- **DAOs**: Create Data Access Objects for database operations
-
-### Network
-- **Error Handling**: Implement proper error handling for network calls
+- **Exact money**: amounts are `Long` minor units with an ISO 4217 code (`Money`); never use floating point for money.
 
 ## UI Patterns
 
 ### Jetpack Compose
-- **State Management**: Use `StateFlow` with Compose state
-- **Navigation**: Use Navigation 3 (`androidx.navigation3`) for screen navigation — destinations are `NavKey`s on an app-owned back stack rendered by `NavDisplay`
-- **Theming**: Use Material 3 theming system
-- **Testing**: Use Compose testing utilities
+- **State**: screens are split into a `…Route` (collects the ViewModel's `uiState` with `collectAsStateWithLifecycle`) and a stateless `…Screen` that previews and tests use.
+- **Navigation**: Navigation 3 (`androidx.navigation3`): destinations are `NavKey`s on an app-owned back stack rendered by `NavDisplay`; each feature registers its entries (`askEntries()`, `receiptsEntries()`).
+- **Theming**: Material 3 (`PocketReceiptsTheme`), edge-to-edge, light and dark previews (`@PreviewLightDark`).
+- **Strings**: all user-visible text in string resources; plurals with `pluralStringResource`.
 
 ## Security & Privacy
-
-### Secrets
-- **API Keys**: Never commit API keys to repository
-- **Secrets**: Use environment variables for sensitive configuration
-
-### Lint Rules
-- **Custom Lint**: Use custom lint rules for code quality
-- **Security Checks**: Implement security-focused lint checks
-- **Code Style**: Enforce consistent code style across modules
-
-## Performance & Optimization
-
-### Build Performance
-- **Parallel Tests**: Enable parallel test execution
-- **Build Cache**: Use build cache for faster builds
-- **Gradle Daemon**: Use Gradle daemon for faster builds
-- **Module Optimization**: Optimize module dependencies
-
-### Runtime Performance
-- **Coroutines**: Use coroutines for asynchronous operations
-- **Flow**: Use Flow for reactive programming
-- **Memory Management**: Properly manage memory and resources
-- **Background Processing**: Use WorkManager for background tasks
-
-## Code Quality
-
-### Linting
-- **Android Lint**: Use Android Lint for code quality checks
-- **Custom Rules**: Implement custom lint rules for project-specific requirements
-- **CI Integration**: Integrate linting with CI/CD pipeline
-
-### Documentation
-- **KDoc**: Use KDoc for public API documentation
-- **README**: Maintain comprehensive README files
-- **Architecture Docs**: Document architectural decisions and patterns
+- No API keys or secrets are needed or committed.
+- Privacy rules are enforced by the build (see Build Setup and README "Privacy guarantees"): no analytics or crash-reporting SDKs, no HTTP clients outside `:data:model-download`, no usage-log upload backend. Never log receipt contents or Ask questions.
 
 ## Development Workflow
+
+### Spec-driven changes (OpenSpec)
+- Behaviour is specified in `openspec/specs/<capability>/spec.md`. Each change is proposed in `openspec/changes/<name>/` (proposal, delta specs, design, tasks), implemented with `/opsx:apply`, and archived with `/opsx:archive` after its PR is merged, which syncs the delta specs into the main specs.
 
 ### Git Workflow
 - **Feature branches**: Do each change on a branch off `main` (e.g. `feature/<openspec-change-name>`). Commit there and push the branch for review.
 - **Review before merge**: Open a pull request into `main`. Merge only after the owner has reviewed it and explicitly approved the merge. Never commit or push directly to `main`.
-
-### Local Development
-- **Gradle Wrapper**: Use Gradle wrapper for consistent builds
-- **Local Properties**: Use `local.properties` for local configuration
-- **Debug Builds**: Use debug builds for development and testing
-
-## Best Practices
-
-### Kotlin
-- **Null Safety**: Leverage Kotlin's null safety features
-- **Extension Functions**: Use extension functions for utility functions
-- **Data Classes**: Use data classes for simple data containers
-- **Sealed Classes**: Use sealed classes for state management
-
-### Android
-- **Lifecycle Awareness**: Make components lifecycle-aware
-- **Memory Leaks**: Avoid memory leaks with proper lifecycle management
-- **Background Processing**: Use appropriate APIs for background work
-- **Permissions**: Handle permissions properly and securely
-
-### Architecture
-- **SOLID Principles**: Follow SOLID principles for clean code
-- **Dependency Inversion**: Depend on abstractions, not concretions
-- **Single Responsibility**: Each class should have a single responsibility
-- **Open/Closed**: Open for extension, closed for modification
+- **CI**: `.github/workflows/ci.yml` runs the build-logic tests, `./gradlew check` and Kover coverage on every push to `main` and every pull request.
 
 ## Code Formatting & Indentation  
   

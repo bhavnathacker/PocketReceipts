@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines what a receipt is and what users can do with their receipts: browse them, view one, add one by hand, edit it and delete it. These receipts are the data that capture, AI extraction and Ask build on later.
+Defines what a receipt is and what users can do with their receipts: browse them, view one, add one by hand, edit it and delete it. These receipts are the data that scanning and Ask build on.
 
 ## Requirements
 

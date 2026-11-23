@@ -192,6 +192,18 @@ class AskViewModelTest {
     }
 
     @Test
+    fun `test that onAsk shows an error when there isn't enough memory for the model`() = runTest {
+        answerSpendingQuestionUseCase.stub { onBlocking { invoke(any()) } doSuspendableAnswer { throw OutOfMemoryError("model") } }
+        initViewModel()
+        underTest.onQuestionChange(question)
+
+        underTest.onAsk()
+
+        assertThat(underTest.uiState.value.hasError).isTrue()
+        assertThat(underTest.uiState.value.isAnswering).isFalse()
+    }
+
+    @Test
     fun `test that onQuestionChange clears the error`() = runTest {
         answerSpendingQuestionUseCase.stub { onBlocking { invoke(any()) } doSuspendableAnswer { throw IOException("engine") } }
         initViewModel()

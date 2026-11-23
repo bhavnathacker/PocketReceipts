@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Gets the on-device Gemma model that reads receipts onto the phone, verifies it, and keeps the app closed until the model is ready, because the app has no way to read receipts without it.
+Gets the on-device Gemma model that reads receipts and spending questions onto the phone, verifies it, and keeps the app closed until the model is ready, because the app has no way to read receipts without it.
 
 ## Requirements
 

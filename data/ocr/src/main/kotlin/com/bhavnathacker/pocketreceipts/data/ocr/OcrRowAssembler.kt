@@ -21,16 +21,17 @@ internal class OcrRowAssembler @Inject constructor() {
         val rows = mutableListOf<MutableList<OcrLine>>()
         lines.sortedBy { it.centerY }.forEach { line ->
             val row = rows.lastOrNull()
-            val sameRow = row != null &&
-                abs(line.centerY - row.map { it.centerY }.average()) <= tolerance &&
-                row.all { similarSize(it, line) }
-            if (sameRow) row!! += line else rows += mutableListOf(line)
+            if (row != null && joinsRow(row, line, tolerance)) row += line else rows += mutableListOf(line)
         }
         val ordered = rows.sortedBy { row -> row.minOf { it.top } }
         return RecognizedText(
             lines = ordered.map { row -> row.sortedBy { it.left }.joinToString(" ") { it.text } },
         )
     }
+
+    private fun joinsRow(row: List<OcrLine>, line: OcrLine, tolerance: Float): Boolean =
+        abs(line.centerY - row.map { it.centerY }.average()) <= tolerance &&
+            row.all { similarSize(it, line) }
 
     private fun similarSize(a: OcrLine, b: OcrLine): Boolean {
         val larger = maxOf(a.height, b.height).toFloat()
