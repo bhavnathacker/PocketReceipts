@@ -8,6 +8,12 @@ Scan a paper receipt or add one by hand, then ask how much you spent, all on you
 
 The app has two tabs: **Receipts** and **Ask**.
 
+## Screenshots
+
+| Receipts | Ask | Receipt detail |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/receipts.png" alt="Receipts tab listing two scanned receipts: Bharat Medical Stores, 764.00 rupees, Health; and Koyo Fashion Private Limited, 1,950.00 rupees, Shopping" width="250"> | <img src="docs/screenshots/ask.png" alt="Ask tab with the question field, the Ask button and four example questions" width="250"> | <img src="docs/screenshots/receipt-detail.png" alt="Detail of the Bharat Medical Stores receipt: 764.00 rupees, 31 Oct 2026, Health, with edit and delete actions" width="250"> |
+
 ## Features
 
 - **Receipt reader setup**: on first launch the app downloads Gemma 4 E2B (2.6 GB, once), an AI model that runs on your phone, and checks the download before using it. The app can't be used until it is set up: the setup screen shows the download's progress and offers Retry when there's no connection, not enough storage, or the download fails. Phones that can't run the model (typically under about 6 GB of RAM) can't use the app.
