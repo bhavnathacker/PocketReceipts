@@ -52,7 +52,7 @@ import com.bhavnathacker.pocketreceipts.feature.ask.presentation.model.AskTotalU
 import com.bhavnathacker.pocketreceipts.feature.ask.presentation.model.AskUiState
 
 /** The example questions, in the order they are offered. */
-private val Examples = listOf(
+private val ExampleQuestions = listOf(
     R.string.ask_example_groceries_october,
     R.string.ask_example_total_2025,
     R.string.ask_example_shopping_quarter,
@@ -217,7 +217,7 @@ private fun Examples(onExampleSelected: (String) -> Unit) {
             text = stringResource(R.string.ask_examples_title),
             style = MaterialTheme.typography.titleSmall,
         )
-        Examples.forEach { example ->
+        ExampleQuestions.forEach { example ->
             val text = stringResource(example)
             SuggestionChip(
                 onClick = { onExampleSelected(text) },

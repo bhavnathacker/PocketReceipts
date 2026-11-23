@@ -73,6 +73,9 @@ internal class AskViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Failed to answer the question")
                 _uiState.update { it.copy(isAnswering = false, hasError = true) }
+            } catch (e: OutOfMemoryError) {
+                Timber.e(e, "Not enough memory to answer the question")
+                _uiState.update { it.copy(isAnswering = false, hasError = true) }
             }
         }
     }

@@ -165,6 +165,24 @@ class DefaultModelRepositoryTest {
     }
 
     @Test
+    fun `test that monitorModelState emits DOWNLOAD_FAILED when the verified file can't be renamed`() = runTest {
+        val underTest = repository()
+        underTest.startDownload()
+        partialFile.writeBytes(content)
+        // A non-empty directory where the model file goes makes the rename fail.
+        File(modelFile, "blocker").apply { parentFile.mkdirs() }.writeText("x")
+        downloader.status = DownloadStatus.Successful
+
+        underTest.monitorModelState().test {
+            assertThat(awaitItem()).isEqualTo(ModelState.Verifying)
+            assertThat(awaitItem()).isEqualTo(ModelState.Failed(ModelFailure.DOWNLOAD_FAILED))
+            cancelAndIgnoreRemainingEvents()
+        }
+        assertThat(partialFile.exists()).isFalse()
+        assertThat(underTest.modelPath()).isNull()
+    }
+
+    @Test
     fun `test that monitorModelState deletes a corrupt download and emits CORRUPT`() = runTest {
         val underTest = repository()
         underTest.startDownload()

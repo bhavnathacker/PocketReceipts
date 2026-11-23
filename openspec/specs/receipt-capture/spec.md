@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines how a paper receipt becomes a saved receipt without typing everything: the user scans it, the app reads its text on the device, suggests the date, total and merchant, and the user confirms them on a review form.
+Defines how a paper receipt becomes a saved receipt without typing everything: the user scans it, the app reads its text on the device, Gemma suggests the merchant, date, total, currency and category, and the user confirms them on a review form.
 
 ## Requirements
 

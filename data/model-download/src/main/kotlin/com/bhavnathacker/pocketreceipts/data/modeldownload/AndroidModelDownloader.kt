@@ -4,6 +4,7 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
@@ -21,7 +22,7 @@ internal class AndroidModelDownloader @Inject constructor(
 
     override fun enqueue(url: String, destination: File): Long =
         downloadManager.enqueue(
-            DownloadManager.Request(Uri.parse(url))
+            DownloadManager.Request(url.toUri())
                 .setDestinationUri(Uri.fromFile(destination))
                 .setTitle(context.getString(R.string.model_download_title))
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
