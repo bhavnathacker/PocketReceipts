@@ -1,14 +1,14 @@
-package com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper
+package com.bhavnathacker.pocketreceipts.core.ui.format
 
 import androidx.annotation.StringRes
+import com.bhavnathacker.pocketreceipts.core.ui.R
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
-import com.bhavnathacker.pocketreceipts.feature.receipts.R
 import javax.inject.Inject
 
 /**
  * The display label of a [ReceiptCategory].
  */
-internal class ReceiptCategoryLabelMapper @Inject constructor() {
+class ReceiptCategoryLabelMapper @Inject constructor() {
 
     @StringRes
     operator fun invoke(category: ReceiptCategory): Int =

@@ -2,7 +2,7 @@ package com.bhavnathacker.pocketreceipts.feature.capture.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bhavnathacker.pocketreceipts.domain.scan.KeepReceiptReaderReadyUseCase
+import com.bhavnathacker.pocketreceipts.domain.ai.KeepModelReadyUseCase
 import com.bhavnathacker.pocketreceipts.domain.scan.ScanReceiptUseCase
 import com.bhavnathacker.pocketreceipts.feature.capture.presentation.model.CaptureStatus
 import com.bhavnathacker.pocketreceipts.feature.capture.presentation.model.CaptureUiState
@@ -30,7 +30,7 @@ import javax.inject.Inject
 @HiltViewModel
 internal class CaptureViewModel @Inject constructor(
     private val scanReceiptUseCase: ScanReceiptUseCase,
-    keepReceiptReaderReadyUseCase: KeepReceiptReaderReadyUseCase,
+    keepModelReadyUseCase: KeepModelReadyUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CaptureUiState())
@@ -39,7 +39,7 @@ internal class CaptureViewModel @Inject constructor(
     private var readingJob: Job? = null
 
     init {
-        viewModelScope.launch { keepReceiptReaderReadyUseCase() }
+        viewModelScope.launch { keepModelReadyUseCase() }
     }
 
     fun onImageScanned(imageUri: String) {

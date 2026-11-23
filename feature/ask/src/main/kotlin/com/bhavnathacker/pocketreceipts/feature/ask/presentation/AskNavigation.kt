@@ -15,6 +15,6 @@ data object AskKey : NavKey
  */
 fun EntryProviderScope<NavKey>.askEntries() {
     entry<AskKey> {
-        AskScreen()
+        AskRoute()
     }
 }

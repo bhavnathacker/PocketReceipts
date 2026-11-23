@@ -7,21 +7,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -38,6 +38,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bhavnathacker.pocketreceipts.core.ui.R as CoreUiR
 import com.bhavnathacker.pocketreceipts.core.ui.icon.AppIcons
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
@@ -205,8 +206,8 @@ private fun ReceiptListScreenPreview() {
         ReceiptListScreen(
             uiState = ReceiptListUiState.Receipts(
                 listOf(
-                    ReceiptListItemUiModel(1, "Corner Shop", "3 Mar 2026", "₹1,23,456.50", R.string.category_groceries),
-                    ReceiptListItemUiModel(2, "Ramen Ya", "2 Mar 2026", "¥1,500", R.string.category_dining),
+                    ReceiptListItemUiModel(1, "Corner Shop", "3 Mar 2026", "₹1,23,456.50", CoreUiR.string.category_groceries),
+                    ReceiptListItemUiModel(2, "Ramen Ya", "2 Mar 2026", "¥1,500", CoreUiR.string.category_dining),
                 ),
             ),
             onReceiptClick = {},

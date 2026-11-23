@@ -1,4 +1,4 @@
-package com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper
+package com.bhavnathacker.pocketreceipts.core.ui.format
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bhavnathacker.pocketreceipts.domain.receipt.Money

@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.StateRestorationTester
@@ -136,6 +137,16 @@ class PocketReceiptsAppTest {
         navItem("Ask").performClick()
 
         heading("Ask").assertIsDisplayed()
+    }
+
+    @Test
+    fun test_that_ask_shows_the_question_field_and_examples() {
+        setApp()
+
+        navItem("Ask").performClick()
+
+        composeRule.onNode(hasText("Ask about your spending") and hasSetTextAction()).assertIsDisplayed()
+        composeRule.onNode(hasText("How much did I spend on groceries in October?")).assertIsDisplayed()
     }
 
     @Test

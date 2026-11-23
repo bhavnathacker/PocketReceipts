@@ -99,10 +99,88 @@ class ReceiptDaoTest {
         }
     }
 
+    @Test
+    fun test_that_currencyTotals_includes_both_end_dates() = runTest {
+        underTest.insert(entity(day = 1, totalMinor = 100))
+        underTest.insert(entity(day = 2, totalMinor = 200))
+        underTest.insert(entity(day = 3, totalMinor = 400))
+        underTest.insert(entity(day = 4, totalMinor = 800))
+
+        val rows = underTest.currencyTotals(march(2), march(3), category = null)
+
+        assertThat(rows).containsExactly(CurrencyTotalRow("EUR", 600, 2))
+    }
+
+    @Test
+    fun test_that_currencyTotals_counts_only_the_category() = runTest {
+        underTest.insert(entity(totalMinor = 12050, category = "groceries"))
+        underTest.insert(entity(totalMinor = 7950, category = "groceries"))
+        underTest.insert(entity(totalMinor = 30000, category = "dining"))
+
+        val rows = underTest.currencyTotals(march(1), march(31), category = "groceries")
+
+        assertThat(rows).containsExactly(CurrencyTotalRow("EUR", 20000, 2))
+    }
+
+    @Test
+    fun test_that_currencyTotals_counts_every_category_when_category_is_null() = runTest {
+        underTest.insert(entity(totalMinor = 100, category = "groceries"))
+        underTest.insert(entity(totalMinor = 200, category = "dining"))
+
+        val rows = underTest.currencyTotals(march(1), march(31), category = null)
+
+        assertThat(rows).containsExactly(CurrencyTotalRow("EUR", 300, 2))
+    }
+
+    @Test
+    fun test_that_currencyTotals_lists_the_currency_with_most_receipts_first() = runTest {
+        underTest.insert(entity(totalMinor = 1230, currencyCode = "EUR"))
+        underTest.insert(entity(totalMinor = 50000, currencyCode = "INR"))
+        underTest.insert(entity(totalMinor = 50000, currencyCode = "INR"))
+        underTest.insert(entity(totalMinor = 50000, currencyCode = "INR"))
+
+        val rows = underTest.currencyTotals(march(1), march(31), category = null)
+
+        assertThat(rows).containsExactly(
+            CurrencyTotalRow("INR", 150000, 3),
+            CurrencyTotalRow("EUR", 1230, 1),
+        ).inOrder()
+    }
+
+    @Test
+    fun test_that_currencyTotals_orders_currencies_with_equal_counts_by_code() = runTest {
+        underTest.insert(entity(totalMinor = 100, currencyCode = "USD"))
+        underTest.insert(entity(totalMinor = 100, currencyCode = "EUR"))
+
+        val codes = underTest.currencyTotals(march(1), march(31), category = null).map { it.currencyCode }
+
+        assertThat(codes).containsExactly("EUR", "USD").inOrder()
+    }
+
+    @Test
+    fun test_that_currencyTotals_returns_no_rows_when_nothing_matches() = runTest {
+        underTest.insert(entity(day = 3))
+
+        assertThat(underTest.currencyTotals(march(4), march(31), category = null)).isEmpty()
+    }
+
+    @Test
+    fun test_that_currencyTotals_accepts_unbounded_dates() = runTest {
+        underTest.insert(entity(day = 3, totalMinor = 450))
+
+        val rows = underTest.currencyTotals(Long.MIN_VALUE, Long.MAX_VALUE, category = null)
+
+        assertThat(rows).containsExactly(CurrencyTotalRow("EUR", 450, 1))
+    }
+
+    private fun march(day: Int) = java.time.LocalDate.of(2026, 3, day).toEpochDay()
+
     private fun entity(
         merchant: String = "Corner Shop",
         day: Int = 3,
         totalMinor: Long = 450,
+        currencyCode: String = "EUR",
+        category: String = "other",
         note: String? = null,
         createdAt: Long = 100,
         updatedAt: Long = createdAt,
@@ -110,8 +188,8 @@ class ReceiptDaoTest {
         merchant = merchant,
         purchaseDate = java.time.LocalDate.of(2026, 3, day).toEpochDay(),
         totalMinor = totalMinor,
-        currencyCode = "EUR",
-        category = "other",
+        currencyCode = currencyCode,
+        category = category,
         note = note,
         createdAt = createdAt,
         updatedAt = updatedAt,

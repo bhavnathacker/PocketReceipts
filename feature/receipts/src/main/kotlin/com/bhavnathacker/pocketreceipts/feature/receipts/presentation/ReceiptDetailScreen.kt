@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bhavnathacker.pocketreceipts.core.ui.R as CoreUiR
 import com.bhavnathacker.pocketreceipts.core.ui.icon.AppIcons
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
@@ -208,7 +209,7 @@ private fun ReceiptDetailScreenPreview() {
                     merchant = "Corner Shop",
                     date = "3 Mar 2026",
                     total = "₹1,23,456.50",
-                    categoryLabel = R.string.category_groceries,
+                    categoryLabel = CoreUiR.string.category_groceries,
                     note = "Milk, bread and eggs",
                 ),
             ),

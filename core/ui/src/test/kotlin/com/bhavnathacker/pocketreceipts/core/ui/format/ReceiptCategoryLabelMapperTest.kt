@@ -1,7 +1,7 @@
-package com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper
+package com.bhavnathacker.pocketreceipts.core.ui.format
 
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
-import com.bhavnathacker.pocketreceipts.feature.receipts.R
+import com.bhavnathacker.pocketreceipts.core.ui.R
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

@@ -4,13 +4,14 @@
 
 An Android app for keeping your receipts in your pocket.
 
-> 🚧 Early development. You can scan receipts or add them by hand, and view, edit and delete them. Receipts are read by Gemma, an AI model that runs on your phone. Ask is next.
+> 🚧 Early development. You can scan receipts or add them by hand, and view, edit and delete them. Receipts are read by Gemma, an AI model that runs on your phone, and you can ask how much you spent. Settings is next.
 
 ## Features
 
 - **Receipt reader setup**: on first launch the app downloads Gemma 4 E2B (2.6 GB, once), an AI model that runs on your phone, and checks the download before using it. The app can't be used until it is set up: the setup screen shows the download's progress and offers Retry when there's no connection, not enough storage, or the download fails. Phones that can't run the model (typically under about 6 GB of RAM) can't use the app.
 - **Scan receipts**: tap **Scan receipt** to photograph a paper receipt (or pick one from your gallery). ML Kit reads its text on your phone, Gemma reads the merchant, date, total (the amount actually paid, such as the net amount, rather than a gross total), currency and category from that text, and the review form opens prefilled with them. Edit anything that's wrong, then save. Reading takes a few seconds and works offline. Gemma starts loading as soon as you open the scanner, so reading can start the moment you finish; it then stays loaded for 2 minutes in case you scan another receipt, and is unloaded sooner if you leave the app. Scanning needs Google Play services, which installs the scanner on first use; without it, you can still add receipts by hand. The scanned image is deleted as soon as its text has been read, and is never stored with the receipt.
 - **Receipts**: a list of your receipts, newest first. Add one by hand with merchant, date, total, currency and category, plus an optional note. Open a receipt to edit or delete it.
+- **Ask about your spending**: type a question such as "How much did I spend on groceries in October?", "How much is my total spend in 2025?" or "How much did I spend on shopping this quarter?", or tap one of the examples. Gemma reads only the category and the period from your question (a month, a quarter, a year, a date range or all time); the app then adds up the matching receipts exactly, on your phone. The answer shows the category and dates it used, the total and the number of receipts, with one total per currency (amounts are never converted). Questions about anything else, such as shops, averages or the biggest purchase, get a "can't answer" message. Gemma starts loading when you open Ask, so it's ready by the time you've typed. Questions and answers aren't stored.
 - **Exact amounts in any currency**: each receipt keeps its own ISO 4217 currency (new ones default to your phone's). Totals are stored as whole minor units (cents, paise...), so nothing is rounded. Amounts are entered and shown in your locale's format, for example `₹1,23,456.50` in India.
 
 ## Tech stack

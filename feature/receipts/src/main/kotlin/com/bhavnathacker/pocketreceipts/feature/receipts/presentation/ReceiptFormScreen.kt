@@ -57,11 +57,11 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bhavnathacker.pocketreceipts.core.ui.format.ReceiptCategoryLabelMapper
 import com.bhavnathacker.pocketreceipts.core.ui.icon.AppIcons
 import com.bhavnathacker.pocketreceipts.core.ui.theme.PocketReceiptsTheme
 import com.bhavnathacker.pocketreceipts.domain.receipt.ReceiptCategory
 import com.bhavnathacker.pocketreceipts.feature.receipts.R
-import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.mapper.ReceiptCategoryLabelMapper
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.model.ReceiptFormUiState
 import de.palm.composestateevents.EventEffect
 import java.time.Instant
