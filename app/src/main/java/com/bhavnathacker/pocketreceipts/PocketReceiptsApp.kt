@@ -25,7 +25,6 @@ import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.ReceiptFor
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.ReceiptsKey
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.receiptReviewKey
 import com.bhavnathacker.pocketreceipts.feature.receipts.presentation.receiptsEntries
-import com.bhavnathacker.pocketreceipts.feature.settings.presentation.settingsEntries
 import com.bhavnathacker.pocketreceipts.navigation.TopLevelDestination
 import com.bhavnathacker.pocketreceipts.navigation.TopLevelNavigator
 
@@ -92,7 +91,6 @@ fun PocketReceiptsApp(
                     onClose = { backStack.removeLastOrNull() },
                 )
                 askEntries()
-                settingsEntries()
             },
         )
     }

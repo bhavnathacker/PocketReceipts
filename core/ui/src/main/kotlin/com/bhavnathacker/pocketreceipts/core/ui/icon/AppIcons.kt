@@ -23,8 +23,6 @@ object AppIcons {
     @DrawableRes val ReceiptsFilled = R.drawable.ic_receipt_long_filled
     @DrawableRes val Ask = R.drawable.ic_chat
     @DrawableRes val AskFilled = R.drawable.ic_chat_filled
-    @DrawableRes val Settings = R.drawable.ic_settings
-    @DrawableRes val SettingsFilled = R.drawable.ic_settings_filled
     @DrawableRes val Add = R.drawable.ic_add
     @DrawableRes val Edit = R.drawable.ic_edit
     @DrawableRes val Delete = R.drawable.ic_delete
@@ -48,8 +46,6 @@ private fun AppIconsPreview() {
                     AppIcons.ReceiptsFilled,
                     AppIcons.Ask,
                     AppIcons.AskFilled,
-                    AppIcons.Settings,
-                    AppIcons.SettingsFilled,
                 ).forEach { icon ->
                     Icon(painter = painterResource(icon), contentDescription = null)
                 }

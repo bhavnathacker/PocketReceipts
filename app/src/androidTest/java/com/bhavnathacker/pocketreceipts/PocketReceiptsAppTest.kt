@@ -13,7 +13,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.window.core.layout.WindowSizeClass
@@ -74,20 +74,20 @@ class PocketReceiptsAppTest {
         pressBack()
     }
 
-    private fun selectSettingsThenBack() {
+    private fun selectAskThenBack() {
         setApp()
-        navItem("Settings").performClick()
+        navItem("Ask").performClick()
         pressBack()
     }
 
-    private fun selectSettingsThenRestoreState() {
+    private fun selectAskThenRestoreState() {
         val restorationTester = StateRestorationTester(composeRule)
         restorationTester.setContent {
             PocketReceiptsTheme {
                 PocketReceiptsApp(windowSizeClass = compact)
             }
         }
-        navItem("Settings").performClick()
+        navItem("Ask").performClick()
         restorationTester.emulateSavedInstanceStateRestore()
     }
 
@@ -113,21 +113,21 @@ class PocketReceiptsAppTest {
     }
 
     @Test
-    fun test_that_app_opens_with_settings_not_selected() {
-        setApp()
-
-        navItem("Settings").assertIsNotSelected()
-    }
-
-    @Test
-    fun test_that_navigation_shows_receipts_ask_and_settings_in_order() {
+    fun test_that_navigation_shows_receipts_then_ask() {
         setApp()
 
         val receipts = navItem("Receipts").getUnclippedBoundsInRoot()
         val ask = navItem("Ask").getUnclippedBoundsInRoot()
-        val settings = navItem("Settings").getUnclippedBoundsInRoot()
 
-        assertThat(listOf(receipts.left, ask.left, settings.left)).isInStrictOrder()
+        assertThat(listOf(receipts.left, ask.left)).isInStrictOrder()
+    }
+
+    @Test
+    fun test_that_navigation_shows_only_receipts_and_ask() {
+        setApp()
+
+        composeRule.onAllNodes(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)).assertCountEquals(2)
+        composeRule.onNodeWithText("Settings").assertDoesNotExist()
     }
 
     @Test
@@ -182,39 +182,38 @@ class PocketReceiptsAppTest {
     }
 
     @Test
-    fun test_that_back_from_settings_shows_the_receipts_screen() {
-        selectSettingsThenBack()
+    fun test_that_back_from_ask_shows_the_receipts_screen() {
+        selectAskThenBack()
 
         heading("Receipts").assertIsDisplayed()
     }
 
     @Test
-    fun test_that_back_from_settings_selects_receipts() {
-        selectSettingsThenBack()
+    fun test_that_back_from_ask_selects_receipts() {
+        selectAskThenBack()
 
         navItem("Receipts").assertIsSelected()
     }
 
     @Test
-    fun test_that_back_from_settings_closes_the_settings_screen() {
-        selectSettingsThenBack()
+    fun test_that_back_from_ask_closes_the_ask_screen() {
+        selectAskThenBack()
 
-        // Only the navigation item is left.
-        composeRule.onAllNodesWithText("Settings").assertCountEquals(1)
+        heading("Ask").assertDoesNotExist()
     }
 
     @Test
     fun test_that_the_selected_screen_survives_state_restoration() {
-        selectSettingsThenRestoreState()
+        selectAskThenRestoreState()
 
-        heading("Settings").assertIsDisplayed()
+        heading("Ask").assertIsDisplayed()
     }
 
     @Test
     fun test_that_the_selected_navigation_item_survives_state_restoration() {
-        selectSettingsThenRestoreState()
+        selectAskThenRestoreState()
 
-        navItem("Settings").assertIsSelected()
+        navItem("Ask").assertIsSelected()
     }
 
     @Test

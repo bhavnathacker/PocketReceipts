@@ -10,7 +10,8 @@ class TopLevelNavigatorTest {
 
     private data object Receipts : NavKey
     private data object Ask : NavKey
-    private data object Settings : NavKey
+    /** A third top-level key: the navigator handles any number, though the app has two. */
+    private data object Other : NavKey
     private data object Detail : NavKey
     private data class ReceiptDetail(val id: Long) : NavKey
     private data class ReceiptForm(val id: Long?) : NavKey
@@ -24,7 +25,7 @@ class TopLevelNavigatorTest {
         underTest = TopLevelNavigator(
             backStack = backStack,
             startKey = Receipts,
-            topLevelKeys = setOf(Receipts, Ask, Settings),
+            topLevelKeys = setOf(Receipts, Ask, Other),
         )
     }
 
@@ -45,15 +46,15 @@ class TopLevelNavigatorTest {
     fun `test that select replaces the current top-level destination when another is selected`() {
         underTest.select(Ask)
 
-        underTest.select(Settings)
+        underTest.select(Other)
 
-        assertThat(backStack).containsExactly(Receipts, Settings).inOrder()
-        assertThat(underTest.selectedKey).isEqualTo(Settings)
+        assertThat(backStack).containsExactly(Receipts, Other).inOrder()
+        assertThat(underTest.selectedKey).isEqualTo(Other)
     }
 
     @Test
     fun `test that select leaves only the start key when the start destination is selected`() {
-        underTest.select(Settings)
+        underTest.select(Other)
 
         underTest.select(Receipts)
 
@@ -90,9 +91,9 @@ class TopLevelNavigatorTest {
         underTest.select(Ask)
         backStack.add(Detail)
 
-        underTest.select(Settings)
+        underTest.select(Other)
 
-        assertThat(backStack).containsExactly(Receipts, Settings).inOrder()
+        assertThat(backStack).containsExactly(Receipts, Other).inOrder()
     }
 
     @Test

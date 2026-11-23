@@ -65,7 +65,7 @@ class ModelSetupGateTest {
 
         composeRule.onNodeWithText("Set up the receipt reader").assertIsDisplayed()
         composeRule.onNodeWithText("Receipts").assertDoesNotExist()
-        composeRule.onNodeWithText("Settings").assertDoesNotExist()
+        composeRule.onNodeWithText("Ask").assertDoesNotExist()
     }
 
     @Test
@@ -83,7 +83,7 @@ class ModelSetupGateTest {
         setGate(ModelState.Ready)
 
         composeRule.onNodeWithText("Set up the receipt reader").assertDoesNotExist()
-        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onNodeWithText("Ask").assertIsDisplayed()
     }
 
     @Test
@@ -103,7 +103,7 @@ class ModelSetupGateTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Set up the receipt reader").assertDoesNotExist()
-        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onNodeWithText("Ask").assertIsDisplayed()
     }
 
     @Test

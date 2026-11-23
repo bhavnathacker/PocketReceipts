@@ -4,7 +4,7 @@
 
 An Android app for keeping your receipts in your pocket.
 
-> 🚧 Early development. You can scan receipts or add them by hand, and view, edit and delete them. Receipts are read by Gemma, an AI model that runs on your phone, and you can ask how much you spent. Settings is next.
+> 🚧 Early development. You can scan receipts or add them by hand, and view, edit and delete them. Receipts are read by Gemma, an AI model that runs on your phone, and you can ask how much you spent. The app has two tabs: Receipts and Ask.
 
 ## Features
 
@@ -48,9 +48,9 @@ Or from the command line:
 
 ```
                  :app  (composition root: Hilt, navigation shell)
-   +------------+------------+------------+------------------+
-   v            v            v            v                  v
- :feature:receipts  :feature:capture  :feature:ask  :feature:modelsetup  :feature:settings
+   +------------+------------+------------+
+   v            v            v            v
+ :feature:receipts  :feature:capture  :feature:ask  :feature:modelsetup
    \______________________|____________________/
                           v
                       :domain   (pure Kotlin: models, use cases, interfaces)
@@ -58,7 +58,7 @@ Or from the command line:
    +----------------------+----------------------+
  :data:receipts   :data:ocr   :data:ai (Gemma via LiteRT-LM)   :data:model-download (only module with network access)
 
- shared: :core:ui (theme, components, icons)  :core:test  :core:ui-test
+ shared: :core:ui (theme, icons, money and category formatting)  :core:test  :core:ui-test
 ```
 
 Dependency rules, checked by `./gradlew check`:

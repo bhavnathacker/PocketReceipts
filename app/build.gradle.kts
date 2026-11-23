@@ -33,7 +33,6 @@ dependencies {
     implementation(project(":feature:capture"))
     implementation(project(":feature:ask"))
     implementation(project(":feature:modelsetup"))
-    implementation(project(":feature:settings"))
     implementation(project(":data:receipts"))
     implementation(project(":data:ocr"))
     implementation(project(":data:ai"))
